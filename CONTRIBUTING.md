@@ -84,6 +84,17 @@ BSD, ISC, and similar). Do **not** introduce copyleft dependencies (GPL, LGPL,
 AGPL, MPL, or similar) without prior discussion in an issue; a copyleft
 dependency can impose obligations on everything that links against it.
 
+CI enforces this with a license gate (`scripts/check_licenses.py`, run by the
+`license-gate` job). It **fails** on strong or network copyleft (GPL, AGPL,
+SSPL, and similar) and **warns** on weak / file-level copyleft (MPL, LGPL, EPL,
+CDDL) — the latter is generally safe to use unmodified but should be reviewed.
+Run it locally in an environment with the requirements installed:
+
+```bash
+pip install -r exploitgym-eval/requirements.txt -r ttp-benchmark/requirements.txt
+python scripts/check_licenses.py
+```
+
 ## Keep the boundary clean
 
 This repository is public and permissively licensed. Do not commit:
