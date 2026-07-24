@@ -141,7 +141,7 @@ If you reference this research, please cite the relevant paper as:
 
 ```
 Galappatti, K. (2026). <Paper Title>. AEGIS Labs, Adversarix, Inc.
-https://github.com/kgalappatti-aegis/aegis-labs
+https://github.com/Adversarix/aegis-labs
 ```
 
 ---

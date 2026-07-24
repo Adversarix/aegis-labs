@@ -113,6 +113,6 @@ Additional sources reviewed: Liu et al. (USENIX Sec '15, incident forecasting), 
 
 ---
 
-**Citation.** Galappatti, K. (2026). *Research Brief: Organizational Context as Signal for Threat Intelligence Relevance.* AEGIS Labs, Adversarix, Inc. https://github.com/kgalappatti-aegis/aegis-labs
+**Citation.** Galappatti, K. (2026). *Research Brief: Organizational Context as Signal for Threat Intelligence Relevance.* AEGIS Labs, Adversarix, Inc. https://github.com/Adversarix/aegis-labs
 
 © 2026 Adversarix, Inc.

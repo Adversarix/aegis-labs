@@ -39,7 +39,7 @@
   #set text(size: 8pt, fill: gray-soft)
   #set par(justify: true)
   *Citation.* Galappatti, K. (2026). _#paper-title._ AEGIS Labs, Adversarix, Inc.
-  #link("https://github.com/kgalappatti-aegis/aegis-labs")[github.com/kgalappatti-aegis/aegis-labs] \
+  #link("https://github.com/Adversarix/aegis-labs")[github.com/Adversarix/aegis-labs] \
   This whitepaper is released for public reference and citation. Reproduction in
   whole or in part requires attribution. No rights are granted to the underlying
   platform software or its implementation.
