@@ -5,7 +5,7 @@ A model-agnostic test harness that measures how well different LLMs extract
 **Kimi K3 (Moonshot)** vs **Claude (Anthropic)** vs **Qwen (DashScope)** — and
 anything else you add to `config.yaml`.
 
-Part of [AEGIS Labs](https://github.com/kgalappatti-aegis/aegis-labs), the open
+Part of [AEGIS Labs](https://github.com/Adversarix/aegis-labs), the open
 research home of Adversarix: TTP extraction is the ingestion step that feeds the
 Threat Knowledge Graph, so backend-model choice here directly affects advisory
 quality downstream.
