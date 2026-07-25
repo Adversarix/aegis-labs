@@ -105,6 +105,30 @@ and lowering it where rules fire cleanly.
 
 ---
 
+### Containing the Simulated Adversary: A Safety Architecture for Autonomous Breach-and-Attack Simulation on Ephemeral Digital Twins
+**July 2026 · Version 0.1 (draft)**
+
+[→ Download PDF](./safe-agentic-bas/Adversarix_Safe_Agentic_BAS_Whitepaper.pdf)
+
+Breach-and-attack simulation is moving from human-driven scripts to autonomous agents
+that select ATT&CK techniques and detonate them through real offensive frameworks, which
+makes the simulator itself a thing that must be contained. This paper threat-models the
+BAS engine as its own adversary and describes the safety architecture that makes
+autonomous emulation safe to run unattended: five invariants enforced in code rather
+than policy, bounded by ephemeral digital twins whose teardown is guaranteed by the
+orchestration. It is published as method rather than engine; no offensive tradecraft
+or engagement data appears.
+
+**Key ideas:**
+- Five runtime invariants (target isolation, default-deny governance, dry-run first, a clean kill switch, and signed simulation markers) whose violation is an error the code raises, not a judgment call an operator makes
+- Keyed (HMAC) simulation markers make synthetic telemetry attributable *and* unforgeable, so a BAS run never triggers real incident response and a real intruder cannot hide behind "it's just the sim"
+- Ephemeral twins bound blast radius by construction: destructive techniques detonate only on targets whose entire purpose is to be destroyed, with teardown executed even on failure or kill
+- Containment and measurement integrity are the same property viewed twice: the controls that keep the simulator in its box are what make its detection-coverage verdicts reproducible and honest
+
+**Topics:** autonomous adversary emulation · BAS self-threat-modeling · default-deny action governance · signed synthetic telemetry · ephemeral digital twins · independent observation & verdict precedence
+
+---
+
 ## Code & Tools
 
 ### ttp-benchmark — TTP Extraction Benchmark
