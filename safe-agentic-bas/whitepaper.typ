@@ -3,7 +3,7 @@
 #show: whitepaper.with(
   title: "Containing the Simulated Adversary",
   subtitle: "A Safety Architecture for Autonomous Breach-and-Attack Simulation on Ephemeral Digital Twins",
-  version: "0.1 (draft)",
+  version: "1.0",
   date: "July 2026",
   tiles: (
     ("5", "safety invariants enforced in code, not policy"),
