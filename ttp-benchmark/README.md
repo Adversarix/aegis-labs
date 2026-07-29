@@ -59,6 +59,29 @@ Output:
 - every raw model response under `results/raw/<model>/<report>.json` (so reruns
   are free and you can eyeball *why* a model scored the way it did)
 
+### Results (seed corpus snapshot, 2026-07-28)
+
+A run over the 20-report seed corpus at `reasoning_effort: low`:
+
+| model | F1(strict) | P | R | refusals/errs | avg s | cost $/run |
+|---|---|---|---|---|---|---|
+| kimi-k3-fireworks | 0.927 | 0.912 | 0.942 | 0/20 | 7.1 (median) | 0.133 |
+| claude-opus-4-8 | 0.906 | 0.895 | 0.917 | 1/20 | 4.7 (median) | 0.262 |
+
+Read these as directional, not definitive. Two things drive the headline gap:
+
+- **Claude refused 1 report** (`stop_reason: refusal` on a benign ransomware
+  writeup), which zeroed all 7 of its gold techniques. On the 19 reports both
+  models processed, quality is a tie (Claude 0.933 vs K3 0.922 F1). A refusal is
+  silent data loss in an ingestion pipeline, so it is scored as a miss here.
+- **K3 is ~half the cost and never refused**; Claude is faster and marginally
+  more accurate on what it accepts. Both make whole-technique errors far more
+  often than sub-technique granularity slips (strict F1 ≈ parent F1 for each).
+
+Reasoning effort does not help this task: at `high`, K3 drops to 0.870 F1
+(precision 0.833) for 3x the cost, because the extra reasoning over-specifies
+correct parent techniques into wrong sub-techniques. `low` is the right default.
+
 ### Per-report drill-down
 
 After the summary table, the harness prints exactly what each model got wrong
