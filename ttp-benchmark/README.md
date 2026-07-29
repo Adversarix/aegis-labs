@@ -2,7 +2,7 @@
 
 A model-agnostic test harness that measures how well different LLMs extract
 **MITRE ATT&CK TTPs** from threat-intelligence reports. Built to compare
-**Kimi K3 (Moonshot)** vs **Claude (Anthropic)** vs **Qwen (DashScope)** — and
+**Kimi K3 (Fireworks)** vs **Claude (Anthropic)** vs **Qwen (DashScope)** — and
 anything else you add to `config.yaml`.
 
 Part of [AEGIS Labs](https://github.com/Adversarix/aegis-labs), the open
@@ -38,9 +38,10 @@ cp .env.example .env    # fill in the keys you have; then `set -a; . ./.env; set
 You only need keys for the models you want to run.
 
 - **Claude** — `ANTHROPIC_API_KEY` (or an `ant auth login` profile).
-- **Kimi K3** — `MOONSHOT_API_KEY`. Confirm the exact K3 model id in the
-  Moonshot console and set it in `config.yaml` (`model:` field) — the
-  OpenAI-compatible id is what the API needs, not the marketing name.
+- **Kimi K3** — `FIREWORKS_API_KEY`. Runs against Fireworks' OpenAI-compatible
+  endpoint with model id `accounts/fireworks/models/kimi-k3` (already set in
+  `config.yaml`). A Moonshot-direct route is included commented-out for anyone
+  with a `MOONSHOT_API_KEY` instead.
 - **Qwen** — `DASHSCOPE_API_KEY`.
 
 ## Run
