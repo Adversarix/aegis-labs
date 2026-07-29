@@ -92,6 +92,43 @@ Reasoning effort does not help this task: at `high`, K3 drops to 0.870 F1
 correct parent techniques into wrong sub-techniques. `low` is the right default,
 which is why DeepSeek runs with reasoning disabled here too.
 
+### Results (CISA real-advisory corpus, 2026-07-29)
+
+A run over the 25-report CISA corpus (`data/corpus_cisa.jsonl`, built by
+`ingest_cisa.py`). This is real advisory prose with the ATT&CK tables and inline
+id citations stripped, so it is genuine behavior-to-technique inference:
+
+| model | F1(strict) | F1(parent) | P | R | refusals/errs | median s | cost $/run | $/report |
+|---|---|---|---|---|---|---|---|---|
+| claude-opus-4-8 | 0.529 | 0.677 | 0.506 | 0.554 | 0/25 | 21.3 | 2.30 | 0.092 |
+| kimi-k3-fireworks | 0.496 | 0.647 | 0.517 | 0.477 | 0/25 | 22.9 | 0.84 | 0.034 |
+| deepseek-v4-pro | 0.401 | 0.548 | 0.498 | 0.335 | 2/25 | 18.9 | 0.28 | 0.011 |
+
+Real advisories are much harder than the seed corpus (every model roughly halved
+its F1), and that is the point: the tight seed bunching opens into a clear,
+stable ranking **Claude > K3 > DeepSeek** (unchanged if you drop DeepSeek's two
+failures: 0.535 / 0.505 / 0.441). What the numbers say:
+
+- **Claude is the quality leader** but at ~2.7x K3's cost and ~8x DeepSeek's.
+  It refused **nothing** here, despite refusing the synthetic ransomware vignette
+  on the seed corpus. The refusal risk appears tied to compact synthetic
+  attack-recipe framing, not real advisories (defensive framing, attribution).
+- **K3 is the value pick** — within ~0.03 F1 of Claude at a third the cost, zero
+  refusals, reliable JSON.
+- **DeepSeek is hard to recommend here** — lowest recall (0.335, finds a third of
+  gold techniques) and it emitted **invalid JSON on the two most technique-dense
+  advisories** (54 and 42 gold), not a truncation but a genuine reliability drop
+  on long complex inputs.
+- **Everyone loses ~0.15 F1 to sub-technique granularity** (parent F1 far above
+  strict). If the downstream graph only needs technique-level resolution, all
+  three are ~0.13-0.15 better than the strict column.
+
+Caveats: CISA tables are not exhaustive, so precision (~0.50 for all) is deflated
+equally by models extracting real techniques that are described in prose but
+absent from the curated table. Trust the ranking more than the absolute F1, and
+do not compare these numbers to the seed corpus (different difficulty and label
+philosophy) — score them as separate splits.
+
 ### Per-report drill-down
 
 After the summary table, the harness prints exactly what each model got wrong
