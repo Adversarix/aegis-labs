@@ -15,19 +15,70 @@ models:
     price_in: 5.0
     price_out: 25.0
 
-  # ---- Kimi K3 (Moonshot AI) --------------------------------------------
-  # NOTE: confirm the exact model id for K3 in the Moonshot console — the
-  # OpenAI-compatible `model` string is what matters here, not the marketing
-  # name. Common ids look like "kimi-k2-0905-preview"; set K3's id below.
-  - key: kimi-k3
+  # ---- Kimi K3 via Fireworks AI -----------------------------------------
+  # Fireworks hosts K3 open-weights on an OpenAI-compatible endpoint. The
+  # `model` string is the fully-qualified Fireworks path, not the marketing
+  # name. A `kimi-k3-fast` router variant also exists (see comment below).
+  - key: kimi-k3-fireworks
     provider: openai_compatible
-    model: kimi-k3                      # <-- CONFIRM exact Moonshot model id
-    api_key_env: MOONSHOT_API_KEY
-    base_url_env: KIMI_BASE_URL
-    base_url_default: https://api.moonshot.ai/v1
+    model: accounts/fireworks/models/kimi-k3
+    # faster router variant: accounts/fireworks/routers/kimi-k3-fast
+    api_key_env: FIREWORKS_API_KEY
+    base_url_env: FIREWORKS_BASE_URL
+    base_url_default: https://api.fireworks.ai/inference/v1
     max_tokens: 4096
-    price_in: null
-    price_out: null
+    price_in: 3.0
+    price_out: 15.0
+    # Extra chat-completions params forwarded verbatim (via extra_body).
+    # This is the baseline; `--reasoning-effort <level>` overrides it per-run.
+    # reasoning_effort: none | low | medium | high  (K3 also: xhigh | max)
+    params:
+      reasoning_effort: low
+
+  # ---- Kimi K3 (Moonshot AI, direct) ------------------------------------
+  # Alternative route if you have a Moonshot key instead of Fireworks.
+  # Confirm the exact K3 model id in the Moonshot console before enabling.
+  # - key: kimi-k3-moonshot
+  #   provider: openai_compatible
+  #   model: kimi-k3                    # <-- CONFIRM exact Moonshot model id
+  #   api_key_env: MOONSHOT_API_KEY
+  #   base_url_env: KIMI_BASE_URL
+  #   base_url_default: https://api.moonshot.ai/v1
+  #   max_tokens: 4096
+  #   price_in: null
+  #   price_out: null
+
+  # ---- Qwen3-235B-A22B via Fireworks (NOT serverless-available) ----------
+  # Probed 2026-07-28: no Qwen id is on this Fireworks account's serverless
+  # catalog (all 404). To benchmark Qwen you need DashScope (qwen3-max) or a
+  # local Ollama open-weight Qwen. Left here as a record; do not re-enable
+  # without confirming the id is callable.
+  # - key: qwen3-235b-instruct
+  #   provider: openai_compatible
+  #   model: accounts/fireworks/models/qwen3-235b-a22b-instruct-2507
+  #   api_key_env: FIREWORKS_API_KEY
+  #   base_url_env: FIREWORKS_BASE_URL
+  #   base_url_default: https://api.fireworks.ai/inference/v1
+  #   max_tokens: 4096
+  #   price_in: 0.22
+  #   price_out: 0.88
+
+  # ---- DeepSeek V4 Pro via Fireworks ------------------------------------
+  # Current frontier peer for K3 on the same serving platform (latency/cost
+  # directly comparable). Confirmed serverless-available on this key.
+  - key: deepseek-v4-pro
+    provider: openai_compatible
+    model: accounts/fireworks/models/deepseek-v4-pro
+    api_key_env: FIREWORKS_API_KEY
+    base_url_env: FIREWORKS_BASE_URL
+    base_url_default: https://api.fireworks.ai/inference/v1
+    max_tokens: 4096
+    price_in: 1.74
+    price_out: 3.48
+    # DeepSeek V4 defaults reasoning on; force it off to match the low-effort
+    # extraction setup (reasoning hurts this task). 'none' disables thinking.
+    params:
+      reasoning_effort: none
 
   # ---- Qwen (Alibaba DashScope) -----------------------------------------
   - key: qwen3-max
@@ -39,3 +90,19 @@ models:
     max_tokens: 4096
     price_in: null
     price_out: null
+
+  # ---- Qwen via Ollama (local, open-weight only) ------------------------
+  # NOTE: qwen3-max is proprietary/API-only and is NOT on Ollama. This runs a
+  # DIFFERENT, open-weight Qwen (up to qwen3:235b, the 235B-A22B MoE), so its
+  # numbers are not comparable to the DashScope qwen3-max entry above.
+  # Ollama ignores the API key but the OpenAI SDK requires a non-empty value,
+  # so set OLLAMA_API_KEY=ollama (any placeholder). Cost is 0 (local compute).
+  # - key: qwen3-ollama
+  #   provider: openai_compatible
+  #   model: qwen3:32b                   # or qwen3:235b (142GB) / qwen3:8b, etc.
+  #   api_key_env: OLLAMA_API_KEY        # placeholder value, e.g. "ollama"
+  #   base_url_env: OLLAMA_BASE_URL
+  #   base_url_default: http://localhost:11434/v1
+  #   max_tokens: 4096
+  #   price_in: 0
+  #   price_out: 0

@@ -2,7 +2,7 @@
 
 A model-agnostic test harness that measures how well different LLMs extract
 **MITRE ATT&CK TTPs** from threat-intelligence reports. Built to compare
-**Kimi K3 (Moonshot)** vs **Claude (Anthropic)** vs **Qwen (DashScope)** — and
+**Kimi K3 (Fireworks)** vs **Claude (Anthropic)** vs **Qwen (DashScope)** — and
 anything else you add to `config.yaml`.
 
 Part of [AEGIS Labs](https://github.com/Adversarix/aegis-labs), the open
@@ -38,9 +38,10 @@ cp .env.example .env    # fill in the keys you have; then `set -a; . ./.env; set
 You only need keys for the models you want to run.
 
 - **Claude** — `ANTHROPIC_API_KEY` (or an `ant auth login` profile).
-- **Kimi K3** — `MOONSHOT_API_KEY`. Confirm the exact K3 model id in the
-  Moonshot console and set it in `config.yaml` (`model:` field) — the
-  OpenAI-compatible id is what the API needs, not the marketing name.
+- **Kimi K3** — `FIREWORKS_API_KEY`. Runs against Fireworks' OpenAI-compatible
+  endpoint with model id `accounts/fireworks/models/kimi-k3` (already set in
+  `config.yaml`). A Moonshot-direct route is included commented-out for anyone
+  with a `MOONSHOT_API_KEY` instead.
 - **Qwen** — `DASHSCOPE_API_KEY`.
 
 ## Run
@@ -57,6 +58,39 @@ Output:
 - a **per-report drill-down** on stdout + `results/drilldown.md`
 - every raw model response under `results/raw/<model>/<report>.json` (so reruns
   are free and you can eyeball *why* a model scored the way it did)
+
+### Results (seed corpus snapshot, 2026-07-28)
+
+A run over the 20-report seed corpus (K3 and DeepSeek reasoning-minimal):
+
+| model | F1(strict) | F1(parent) | P | R | refusals/errs | median s | cost $/run | $/report |
+|---|---|---|---|---|---|---|---|---|
+| kimi-k3-fireworks | 0.927 | 0.932 | 0.912 | 0.942 | 0/20 | 7.1 | 0.133 | 0.0067 |
+| claude-opus-4-8 | 0.906 | 0.927 | 0.895 | 0.917 | 1/20 | 4.7 | 0.262 | 0.0131 |
+| deepseek-v4-pro | 0.844 | 0.907 | 0.862 | 0.826 | 0/20 | 3.9 | 0.027 | 0.0014 |
+
+Read these as directional, not definitive. What drives the ranking:
+
+- **K3 is the best quality-per-cost pick** — top F1, no refusals, ~half Claude's
+  cost.
+- **Claude refused 1 report** (`stop_reason: refusal` on a benign ransomware
+  writeup), which zeroed all 7 of its gold techniques. On the 19 reports every
+  model processed, Claude leads on quality (0.933 vs K3 0.922 vs DeepSeek 0.838
+  F1). A refusal is silent data loss in an ingestion pipeline, so it is scored as
+  a miss here.
+- **DeepSeek-V4-Pro is the budget option** — 0.844 F1 at ~1/10th the cost
+  ($0.0014/report), but recall-limited (0.826): it under-extracts, missing real
+  techniques. Its parent F1 (0.907) is well above strict, so more of its errors
+  are wrong-sub-technique near-misses; it closes much of the gap if you only need
+  technique-level granularity downstream.
+- Both Fireworks-served models show occasional serverless latency spikes (K3 to
+  95s, DeepSeek to 32s) that the median hides; Claude (different infra) stayed
+  tight.
+
+Reasoning effort does not help this task: at `high`, K3 drops to 0.870 F1
+(precision 0.833) for 3x the cost, because the extra reasoning over-specifies
+correct parent techniques into wrong sub-techniques. `low` is the right default,
+which is why DeepSeek runs with reasoning disabled here too.
 
 ### Per-report drill-down
 

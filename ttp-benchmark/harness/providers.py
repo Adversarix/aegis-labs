@@ -105,6 +105,15 @@ class AnthropicProvider:
                 messages=[{"role": "user", "content": build_user_prompt(report_text)}],
                 output_config={"format": {"type": "json_schema", "schema": TTP_JSON_SCHEMA}},
             )
+            if getattr(resp, "stop_reason", None) == "refusal":
+                return ExtractionResult(
+                    model_key=self.key,
+                    raw_text="",
+                    input_tokens=resp.usage.input_tokens,
+                    output_tokens=resp.usage.output_tokens,
+                    latency_s=time.perf_counter() - t0,
+                    error="refusal (model declined to process this report)",
+                )
             text = next((b.text for b in resp.content if b.type == "text"), "")
             return ExtractionResult(
                 model_key=self.key,
@@ -132,6 +141,10 @@ class OpenAICompatibleProvider:
         self.key = cfg["key"]
         self.model = cfg["model"]
         self.max_tokens = cfg.get("max_tokens", 4096)
+        # Extra request params forwarded verbatim to the API (e.g.
+        # reasoning_effort). Sent via extra_body so provider-specific values
+        # pass through regardless of the installed OpenAI SDK version.
+        self.extra_params = cfg.get("params", {}) or {}
 
         api_key = os.environ.get(cfg.get("api_key_env", ""), "")
         base_url = os.environ.get(cfg.get("base_url_env", ""), "") or cfg.get("base_url_default")
@@ -151,6 +164,7 @@ class OpenAICompatibleProvider:
                     {"role": "system", "content": SYSTEM},
                     {"role": "user", "content": build_user_prompt(report_text)},
                 ],
+                extra_body=self.extra_params or None,
             )
             text = resp.choices[0].message.content or ""
             usage = resp.usage

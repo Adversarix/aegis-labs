@@ -203,10 +203,29 @@ def main() -> None:
     ap.add_argument("--limit", type=int, help="only the first N reports")
     ap.add_argument("--no-cache", action="store_true", help="ignore cached responses")
     ap.add_argument("--no-drill", action="store_true", help="skip the per-report drill-down")
+    ap.add_argument(
+        "--reasoning-effort",
+        choices=["none", "low", "medium", "high", "xhigh", "max"],
+        help="override reasoning_effort for openai_compatible models (e.g. Kimi K3); "
+        "not all providers accept every level, and the API coerces unsupported ones",
+    )
     args = ap.parse_args()
 
     corpus = load_corpus(pathlib.Path(args.corpus), args.limit)
     models = load_config(pathlib.Path(args.config), args.models)
+
+    if args.reasoning_effort:
+        overridden = []
+        for m in models:
+            if m.get("provider") == "openai_compatible":
+                m.setdefault("params", {})["reasoning_effort"] = args.reasoning_effort
+                overridden.append(m["key"])
+        if overridden:
+            print(f"reasoning_effort={args.reasoning_effort} applied to: {', '.join(overridden)}")
+            if not args.no_cache:
+                print("  ! note: cache is keyed by model+report, not effort; pass "
+                      "--no-cache to avoid reusing responses from another effort level")
+
     print(f"Corpus: {len(corpus)} reports | Models: {', '.join(m['key'] for m in models)}")
 
     reports: list[ModelReport] = []
