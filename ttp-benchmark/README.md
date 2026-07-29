@@ -61,26 +61,36 @@ Output:
 
 ### Results (seed corpus snapshot, 2026-07-28)
 
-A run over the 20-report seed corpus at `reasoning_effort: low`:
+A run over the 20-report seed corpus (K3 and DeepSeek reasoning-minimal):
 
-| model | F1(strict) | P | R | refusals/errs | avg s | cost $/run |
-|---|---|---|---|---|---|---|
-| kimi-k3-fireworks | 0.927 | 0.912 | 0.942 | 0/20 | 7.1 (median) | 0.133 |
-| claude-opus-4-8 | 0.906 | 0.895 | 0.917 | 1/20 | 4.7 (median) | 0.262 |
+| model | F1(strict) | F1(parent) | P | R | refusals/errs | median s | cost $/run | $/report |
+|---|---|---|---|---|---|---|---|---|
+| kimi-k3-fireworks | 0.927 | 0.932 | 0.912 | 0.942 | 0/20 | 7.1 | 0.133 | 0.0067 |
+| claude-opus-4-8 | 0.906 | 0.927 | 0.895 | 0.917 | 1/20 | 4.7 | 0.262 | 0.0131 |
+| deepseek-v4-pro | 0.844 | 0.907 | 0.862 | 0.826 | 0/20 | 3.9 | 0.027 | 0.0014 |
 
-Read these as directional, not definitive. Two things drive the headline gap:
+Read these as directional, not definitive. What drives the ranking:
 
+- **K3 is the best quality-per-cost pick** — top F1, no refusals, ~half Claude's
+  cost.
 - **Claude refused 1 report** (`stop_reason: refusal` on a benign ransomware
-  writeup), which zeroed all 7 of its gold techniques. On the 19 reports both
-  models processed, quality is a tie (Claude 0.933 vs K3 0.922 F1). A refusal is
-  silent data loss in an ingestion pipeline, so it is scored as a miss here.
-- **K3 is ~half the cost and never refused**; Claude is faster and marginally
-  more accurate on what it accepts. Both make whole-technique errors far more
-  often than sub-technique granularity slips (strict F1 ≈ parent F1 for each).
+  writeup), which zeroed all 7 of its gold techniques. On the 19 reports every
+  model processed, Claude leads on quality (0.933 vs K3 0.922 vs DeepSeek 0.838
+  F1). A refusal is silent data loss in an ingestion pipeline, so it is scored as
+  a miss here.
+- **DeepSeek-V4-Pro is the budget option** — 0.844 F1 at ~1/10th the cost
+  ($0.0014/report), but recall-limited (0.826): it under-extracts, missing real
+  techniques. Its parent F1 (0.907) is well above strict, so more of its errors
+  are wrong-sub-technique near-misses; it closes much of the gap if you only need
+  technique-level granularity downstream.
+- Both Fireworks-served models show occasional serverless latency spikes (K3 to
+  95s, DeepSeek to 32s) that the median hides; Claude (different infra) stayed
+  tight.
 
 Reasoning effort does not help this task: at `high`, K3 drops to 0.870 F1
 (precision 0.833) for 3x the cost, because the extra reasoning over-specifies
-correct parent techniques into wrong sub-techniques. `low` is the right default.
+correct parent techniques into wrong sub-techniques. `low` is the right default,
+which is why DeepSeek runs with reasoning disabled here too.
 
 ### Per-report drill-down
 

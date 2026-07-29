@@ -48,6 +48,38 @@ models:
   #   price_in: null
   #   price_out: null
 
+  # ---- Qwen3-235B-A22B via Fireworks (NOT serverless-available) ----------
+  # Probed 2026-07-28: no Qwen id is on this Fireworks account's serverless
+  # catalog (all 404). To benchmark Qwen you need DashScope (qwen3-max) or a
+  # local Ollama open-weight Qwen. Left here as a record; do not re-enable
+  # without confirming the id is callable.
+  # - key: qwen3-235b-instruct
+  #   provider: openai_compatible
+  #   model: accounts/fireworks/models/qwen3-235b-a22b-instruct-2507
+  #   api_key_env: FIREWORKS_API_KEY
+  #   base_url_env: FIREWORKS_BASE_URL
+  #   base_url_default: https://api.fireworks.ai/inference/v1
+  #   max_tokens: 4096
+  #   price_in: 0.22
+  #   price_out: 0.88
+
+  # ---- DeepSeek V4 Pro via Fireworks ------------------------------------
+  # Current frontier peer for K3 on the same serving platform (latency/cost
+  # directly comparable). Confirmed serverless-available on this key.
+  - key: deepseek-v4-pro
+    provider: openai_compatible
+    model: accounts/fireworks/models/deepseek-v4-pro
+    api_key_env: FIREWORKS_API_KEY
+    base_url_env: FIREWORKS_BASE_URL
+    base_url_default: https://api.fireworks.ai/inference/v1
+    max_tokens: 4096
+    price_in: 1.74
+    price_out: 3.48
+    # DeepSeek V4 defaults reasoning on; force it off to match the low-effort
+    # extraction setup (reasoning hurts this task). 'none' disables thinking.
+    params:
+      reasoning_effort: none
+
   # ---- Qwen (Alibaba DashScope) -----------------------------------------
   - key: qwen3-max
     provider: openai_compatible
@@ -58,3 +90,19 @@ models:
     max_tokens: 4096
     price_in: null
     price_out: null
+
+  # ---- Qwen via Ollama (local, open-weight only) ------------------------
+  # NOTE: qwen3-max is proprietary/API-only and is NOT on Ollama. This runs a
+  # DIFFERENT, open-weight Qwen (up to qwen3:235b, the 235B-A22B MoE), so its
+  # numbers are not comparable to the DashScope qwen3-max entry above.
+  # Ollama ignores the API key but the OpenAI SDK requires a non-empty value,
+  # so set OLLAMA_API_KEY=ollama (any placeholder). Cost is 0 (local compute).
+  # - key: qwen3-ollama
+  #   provider: openai_compatible
+  #   model: qwen3:32b                   # or qwen3:235b (142GB) / qwen3:8b, etc.
+  #   api_key_env: OLLAMA_API_KEY        # placeholder value, e.g. "ollama"
+  #   base_url_env: OLLAMA_BASE_URL
+  #   base_url_default: http://localhost:11434/v1
+  #   max_tokens: 4096
+  #   price_in: 0
+  #   price_out: 0
