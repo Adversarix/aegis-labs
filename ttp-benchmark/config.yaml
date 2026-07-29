@@ -88,8 +88,10 @@ models:
     base_url_env: QWEN_BASE_URL
     base_url_default: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
     max_tokens: 4096
-    price_in: null
-    price_out: null
+    # DashScope tiers qwen3-max by input size; base rate (<32k tok) below, which
+    # covers our reports. Longer inputs cost more, so cost is a slight underestimate.
+    price_in: 0.78
+    price_out: 3.90
 
   # ---- Qwen via Ollama (local, open-weight only) ------------------------
   # NOTE: qwen3-max is proprietary/API-only and is NOT on Ollama. This runs a

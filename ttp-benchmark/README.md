@@ -103,25 +103,32 @@ id citations stripped, so it is genuine behavior-to-technique inference:
 | claude-opus-4-8 | 0.529 | 0.677 | 0.506 | 0.554 | 0/25 | 21.3 | 2.30 | 0.092 |
 | kimi-k3-fireworks | 0.496 | 0.647 | 0.517 | 0.477 | 0/25 | 22.9 | 0.84 | 0.034 |
 | deepseek-v4-pro | 0.401 | 0.548 | 0.498 | 0.335 | 2/25 | 18.9 | 0.28 | 0.011 |
+| qwen3-max | 0.359 | 0.478 | 0.473 | 0.290 | 1/25 | 24.0 | 0.18 | 0.0073 |
 
 Real advisories are much harder than the seed corpus (every model roughly halved
 its F1), and that is the point: the tight seed bunching opens into a clear,
-stable ranking **Claude > K3 > DeepSeek** (unchanged if you drop DeepSeek's two
-failures: 0.535 / 0.505 / 0.441). What the numbers say:
+stable ranking **Claude > K3 > DeepSeek > qwen3-max** (unchanged if you drop the
+JSON-failure reports: 0.535 / 0.505 / 0.441 / 0.372). What the numbers say:
 
-- **Claude is the quality leader** but at ~2.7x K3's cost and ~8x DeepSeek's.
+- **Claude is the quality leader** but at ~2.7x K3's cost and ~12x qwen3-max's.
   It refused **nothing** here, despite refusing the synthetic ransomware vignette
   on the seed corpus. The refusal risk appears tied to compact synthetic
   attack-recipe framing, not real advisories (defensive framing, attribution).
 - **K3 is the value pick** — within ~0.03 F1 of Claude at a third the cost, zero
   refusals, reliable JSON.
-- **DeepSeek is hard to recommend here** — lowest recall (0.335, finds a third of
-  gold techniques) and it emitted **invalid JSON on the two most technique-dense
-  advisories** (54 and 42 gold), not a truncation but a genuine reliability drop
-  on long complex inputs.
-- **Everyone loses ~0.15 F1 to sub-technique granularity** (parent F1 far above
-  strict). If the downstream graph only needs technique-level resolution, all
-  three are ~0.13-0.15 better than the strict column.
+- **qwen3-max finished last despite being Alibaba's proprietary flagship** —
+  worst recall (0.290, finds under a third of gold techniques) and it hit the
+  same invalid-JSON failure as DeepSeek on the densest advisory (42 gold). It is
+  the cheapest ($0.0073/report) but quality-per-dollar it is dominated by K3
+  (~4.5x the cost for +0.14 F1 and zero failures). The open-weight K3 beat the
+  closed flagship outright.
+- **DeepSeek is also hard to recommend** — low recall (0.335) and **invalid JSON
+  on the two most technique-dense advisories** (54 and 42 gold), a reliability
+  drop on long complex inputs, not truncation. Both budget models crack on the
+  hardest real inputs while Claude and K3 stay clean across all 25.
+- **Everyone loses ~0.12-0.15 F1 to sub-technique granularity** (parent F1 far
+  above strict). If the downstream graph only needs technique-level resolution,
+  all four are meaningfully better than the strict column.
 
 Caveats: CISA tables are not exhaustive, so precision (~0.50 for all) is deflated
 equally by models extracting real techniques that are described in prose but
