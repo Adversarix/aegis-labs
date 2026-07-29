@@ -136,6 +136,36 @@ absent from the curated table. Trust the ranking more than the absolute F1, and
 do not compare these numbers to the seed corpus (different difficulty and label
 philosophy) — score them as separate splits.
 
+#### By threat category
+
+The 25 CISA reports sliced by type (strict F1, recall in parens):
+
+| model | ransomware (n=8) | APT/nation-state (n=9) | red-team/hygiene (n=4) | other/ICS (n=4) |
+|---|---|---|---|---|
+| claude | 0.63 (0.62) | 0.47 (0.51) | 0.54 (0.54) | 0.34 (0.48) |
+| k3 | 0.61 (0.55) | 0.43 (0.42) | 0.49 (0.48) | 0.33 (0.39) |
+| deepseek | 0.52 (0.43) | 0.24 (0.18) | 0.48 (0.41) | 0.33 (0.42) |
+| qwen3-max | 0.45 (0.36) | 0.28 (0.22) | 0.37 (0.29) | 0.27 (0.30) |
+
+- **The ranking holds in every category — Claude > K3 uniformly.** No category
+  where a cheaper model wins, so there is no model-routing arbitrage; the backend
+  choice is a single decision, not per-report-type.
+- **Difficulty is dominated by report type.** Every model scores far higher on
+  ransomware (~0.6, the standardized #StopRansomware format with canonical TTPs)
+  than on APT/nation-state (~0.45, bespoke techniques and freeform narrative). A
+  corpus's category mix therefore drives its absolute F1 — read any single number
+  in light of its mix.
+- **K3 is closest to Claude on structured ransomware (0.61 vs 0.63); Claude's edge
+  widens on hard APT.** The premium buys the most on the hardest material.
+- **DeepSeek's collapse is concentrated in APT** (F1 0.24, recall 0.18 — both its
+  JSON failures fell here). It is least reliable exactly where the hard intel
+  lives. This is also why the overall DeepSeek > qwen3-max ordering is only
+  ~90% stable: they swap by category (DeepSeek wins ransomware/red-team, qwen3-max
+  edges APT).
+
+Per-category n is small (8/9/4/4); ransomware and APT are the reliable slices,
+red-team and other (n=4) are suggestive only.
+
 ### Per-report drill-down
 
 After the summary table, the harness prints exactly what each model got wrong
