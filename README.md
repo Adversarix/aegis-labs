@@ -84,6 +84,29 @@ three corpora of different provenance.
 
 ---
 
+### Extracting ATT&CK from Real Advisories: A Leakage-Safe Benchmark and Backend-Model Comparison for TTP Ingestion
+**July 2026 · Version 0.1 (draft)**
+
+[→ Download PDF](./ttp-benchmark/Adversarix_TTP_Extraction_Benchmark_Whitepaper.pdf)
+
+Which LLM should read a threat advisory and return its ATT&CK techniques, and how do you
+measure that honestly? This paper benchmarks four frontier models (Claude Opus 4.8, Kimi K3,
+DeepSeek-V4-Pro, Qwen3-Max) across a synthetic corpus and 25 real CISA advisories. Most of
+the difficulty turns out to live in the benchmark, not the models: CISA advisories cite
+technique IDs inline in prose, so an unsanitized benchmark measures copy-paste rather than
+extraction. Complementary to the *Measuring TTP Extraction* framework above, and a sanitized
+public derivation of the same internal methodology.
+
+**Key findings:**
+- Synthetic corpora do not discriminate frontier models (all within 0.08 F1); real advisories do (they spread to 0.36–0.53 and the ranking stabilizes)
+- The open-weight Kimi K3 is the quality-per-cost backend, within 0.03 F1 of the leader at a third the cost, and beat the proprietary Qwen3-Max outright
+- Refusal is framing-dependent: the strongest model refused a synthetic ransomware vignette but zero of 25 real advisories describing the same behavior
+- Higher reasoning effort *lowers* extraction F1, by over-specifying correct parent techniques into wrong sub-techniques
+
+**Topics:** inline-ID leakage · synthetic-vs-real evaluation · leakage-safe CISA ingest · frontier model comparison · reasoning-effort ablation · open-vs-closed backend selection · candidate-pool label adjudication
+
+---
+
 ### Empirical Detection Posteriors: Closing the Loop from SIEM Firings to Breach Probability
 **July 2026 · Version 1.1**
 
