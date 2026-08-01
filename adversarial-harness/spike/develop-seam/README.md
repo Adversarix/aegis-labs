@@ -31,6 +31,7 @@ a human exploit developer does, instead of stateless run-once calls.
 | `build_exploit_canary` | pwntools process | leak the canary, preserve it, overwrite return with win(); defeats the canary (ramp: canary) |
 | `gadget_search` | ROPgadget CLI | gadgets whose instructions contain a substring query (e.g. `x0, x30`); works on aarch64 after the image's capstone/ROPgadget fix (ramp: NX/ROP) |
 | `build_rop_call` | pwntools process | ROP chain to call `func(arg)` despite NX via an x0-loading gadget (ramp: NX/ROP) |
+| `build_exploit_combined` | pwntools process | chain a canary leak + a PIE code leak in one exploit (ramp: PIE+canary capstone) |
 
 ## Env
 
@@ -61,5 +62,7 @@ PIE/ASLR rung and
 [`../develop/FINDINGS-mitigation-ramp-canary.md`](../develop/FINDINGS-mitigation-ramp-canary.md)
 for the stack-canary rung, and
 [`../develop/FINDINGS-mitigation-ramp-rop.md`](../develop/FINDINGS-mitigation-ramp-rop.md) for the
-NX/ROP rung (gadget search + ROP chain, after fixing the aarch64 gadget tooling) — all cases where
-the specialized primitive is decisive (success vs failure).
+NX/ROP rung (gadget search + ROP chain, after fixing the aarch64 gadget tooling), and
+[`../develop/FINDINGS-mitigation-ramp-combined.md`](../develop/FINDINGS-mitigation-ramp-combined.md)
+for the PIE+canary+NX capstone (chaining two primitives) — all cases where the specialized primitive
+is decisive (success vs failure).
