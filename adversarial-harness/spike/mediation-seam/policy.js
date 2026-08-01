@@ -44,6 +44,8 @@ export const TOOLS = {
   build_rop_call:       { tier: "green", isolated: true },
   // mitigation-ramp capstone: chain a PIE leak + a canary leak in one exploit
   build_exploit_combined: { tier: "green", isolated: true },
+  // L5 robust: certify reliability across ASLR-randomized runs (a measurement)
+  assess_robustness:      { tier: "green", isolated: true },
 };
 
 // The default enforcing run scope: green tier, discovery tools only, sandbox
