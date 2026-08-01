@@ -1,0 +1,3 @@
+# Local typst render (default output name). The published artifact is the
+# nicely-named Adversarix_Safe_Agentic_BAS_Whitepaper.pdf, committed on release.
+whitepaper.pdf
