@@ -16,7 +16,7 @@ Spike scratch dir: [`spike/`](./spike/) (in-repo scaffolding); raw responses in 
 
 - **Format risk + neutrality (round-trip on local + hosted):** **resolved** — identical `run_shell` tool schema round-trips through Ollama `qwen3.6:latest` (local) and Fireworks `kimi-k3` (hosted); both emit well-formed `tool_calls` with parseable JSON args, only config swapped. No adapter needed.
 - **Fork chosen:** **Goose 1.45.0** — both forks dispatched a tool end-to-end against Ollama, but Goose needs zero glue (native `ollama` provider) and its MCP-extension tools give the out-of-loop dispatch chokepoint the Day-3 mediation seam requires. OpenCode is the fallback.
-- **Mediation interception clean?** `<yes / no>` — `<one line>` _(Day 3, pending)_
+- **Mediation interception clean?** **yes** — an out-of-process MCP stdio seam (`spike/mediation-seam/`) loaded as Goose's only extension (`--no-profile`) intercepts every tool call at one chokepoint and logs it before execution; no bypass, no Goose source change. Log-only this week.
 - **Capability signal (found w/ tools vs without):** `<one line>` _(Day 4–5, pending)_
 - **Overall verdict:** `<stack viable to proceed / needs rework because …>` _(pending Days 2–5)_
 
@@ -90,12 +90,27 @@ the model call a shell/bash tool, dispatched it, and returned the output to the 
 
 ## Day 3 — Mediation seam (log-only)
 
-**ACCEPTANCE 3** (every tool call interceptable at one chokepoint, no bypass): `<PASS / FAIL>`
+**ACCEPTANCE 3** (every tool call interceptable at one chokepoint, no bypass): **PASS**
 
-- Where the seam was inserted (loop ↔ tool dispatch): `<…>`
-- Sample mediation log line: `<{actor, tool, args, decision:"allow"}>`
-- Any dispatch path that bypassed the seam? `<none | …>`
-- Implication for the fork decision (if any): `<…>`
+- Where the seam was inserted (loop ↔ tool dispatch): **out of process, as an MCP stdio server**
+  (`spike/mediation-seam/server.js`, `@modelcontextprotocol/sdk`). Goose loads it as its *only*
+  extension via `goose run --no-profile --with-extension "MEDIATION_LOG=… node …/server.js"`.
+  `--no-profile` suppresses the builtin `developer`/shell extension, so the seam server exposes the
+  only tool the model can call. Every tool call is an MCP `tools/call` that crosses the server's
+  `mediate()` (logs `{ts, actor, tool, args, decision}`, then allows) before anything executes.
+  This is the `DESIGN.md` §4 L1 claim made concrete: the governed dispatch layer lives **outside the
+  agent loop**, and Goose was not modified or rebuilt.
+- Sample mediation log line:
+  `{"ts":"2026-08-01T17:58:35.229Z","actor":"model","tool":"run_shell","args":{"cmd":"echo hello-through-the-seam"},"decision":"allow","seam":"log-only"}`
+- Any dispatch path that bypassed the seam? **None in this configuration.** With `--no-profile`, the
+  model had exactly one tool and it went through the seam. **Caveat (honest):** interception holds
+  *because we control which extensions load* — a production harness must guarantee no builtin or
+  second extension is loaded alongside (or route those through the seam too). The spike proves
+  central interception is *feasible and clean* in Goose, which is the question Day 3 asked.
+- Implication for the fork decision: **confirms the Day-2 pick.** Goose's MCP-extension model gives a
+  single, out-of-loop chokepoint with zero core changes — exactly what the mediation plane needs.
+  The seam is log-only this week; enforcement (default-deny, target-isolation, signed markers,
+  kill-gate) is the next milestone, deliberately not built.
 
 ---
 
@@ -135,7 +150,7 @@ the model call a shell/bash tool, dispatched it, and returned the output to the 
 - **Round-trip held on both?** **Yes** — ACCEPTANCE 1 PASS on local and hosted; neutrality proven day one.
 - **Fork chosen + why:** Goose 1.45.0 — least glue (native `ollama` provider, no config/adapter) + MCP-extension dispatch chokepoint for the mediation seam (`DESIGN.md` §4 L1). OpenCode fallback.
 - **Adapter needed?** **No** (at L3, for these two backends) — identical schema, identical response shape.
-- **Mediation interception clean?** `<…>` _(Day 3, pending)_
+- **Mediation interception clean?** Yes — MCP-stdio seam as Goose's only extension (`--no-profile`); every tool call logged at one chokepoint before execution; no bypass; Goose unmodified. Log-only.
 - **Ablation result:** `<…>` _(Day 5, pending)_
 
 ---
