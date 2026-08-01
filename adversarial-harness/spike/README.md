@@ -58,6 +58,15 @@ Day 4–5 per the runbook.
 
 See `../FINDINGS-week-one-spike.md` for the full write-up.
 
+### Post-spike milestone — enforcing seam
+
+The seam is now **enforcing** by default (was log-only during the spike). It
+evaluates `DESIGN.md` §6 invariants — default-deny, target-isolation, signed
+markers, kill-gate — and on a `deny` verdict the tool does not execute. See
+[`mediation-seam/README.md`](./mediation-seam/README.md) and run
+`cd mediation-seam && npm test`. Still green-tier; amber/red and dry-run-first
+remain deferred.
+
 ### Reproduce Days 3–4
 
 ```bash

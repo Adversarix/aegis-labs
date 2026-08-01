@@ -204,9 +204,13 @@ result but wasn't.)_
 - **Format config to reuse:** OpenAI-compatible `/v1/chat/completions`, `tool_choice: auto`, shared
   schema, no parser/template override — captured in `spike/backends.conf` (local Ollama + hosted
   Fireworks). Seam wiring: `goose run --no-profile --with-extension "…node server.js"`.
-- **Immediate follow-on** (per stage specs): (1) turn the seam **log-only → enforcing** — implement
-  default-deny + a first invariant (target-isolation or signed markers, `DESIGN.md` §6), still green
-  tier; (2) add the EnIGMA persistent-debugger Interactive Agent Tool behind the seam
+- **Immediate follow-on** (per stage specs): (1) ~~turn the seam **log-only → enforcing**~~ **DONE
+  (2026-08-01):** the seam now enforces four `DESIGN.md` §6 invariants — default-deny, target-isolation,
+  signed HMAC markers, kill-gate — with `deny` blocking execution; policy/marker unit tests pass and an
+  enforcing agent run captured a real containment trace (host-shell attempts denied, sandbox tools
+  allowed with verifiable markers). See [`spike/mediation-seam/README.md`](./spike/mediation-seam/README.md).
+  Dry-run-first (5th invariant) stays deferred with red-tier work. (2) add the EnIGMA persistent-debugger
+  Interactive Agent Tool behind the seam
   (`develop-stage.md` build-first) and re-run the ablation on a non-trivial target where reasoning
   alone fails — that is where the capability delta should widen; (3) promote a confirmed crash to a
   Finding + custody record (`discovery-stage.md`, `munitions-custody-policy.md`).
