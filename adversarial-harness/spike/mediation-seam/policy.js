@@ -24,6 +24,16 @@ export const TOOLS = {
   run_shell: { tier: "green", isolated: false },
   run_poc:   { tier: "green", isolated: true },
   fuzz:      { tier: "green", isolated: true },
+  // develop-stage Interactive Agent Tools + exploit-dev primitives. All execute
+  // only inside the sandbox container (isolated), so they pass target-isolation.
+  mitigation_check: { tier: "green", isolated: true },
+  pattern:          { tier: "green", isolated: true },
+  find_offset:      { tier: "green", isolated: true },
+  debug:            { tier: "green", isolated: true },
+  target_io:        { tier: "green", isolated: true },
+  gadget_search:    { tier: "green", isolated: true },
+  symbol:           { tier: "green", isolated: true },
+  build_exploit:    { tier: "green", isolated: true },
 };
 
 // The default enforcing run scope: green tier, discovery tools only, sandbox
