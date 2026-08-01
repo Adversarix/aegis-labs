@@ -1,9 +1,12 @@
 {
   "name": "mediation-seam",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
-  "description": "Log-only mediation seam (week-one spike Day 3): an MCP stdio server every Goose tool call must cross before it runs.",
+  "description": "Mediation seam: an MCP stdio server every Goose tool call must cross. Log-only or enforcing (default-deny, target-isolation, signed markers, kill-gate).",
+  "scripts": {
+    "test": "node test-policy.mjs"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "zod": "^3.23.0"

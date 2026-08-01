@@ -1,0 +1,7 @@
+{
+  "run_id": "spike-green-run",
+  "allowed_tiers": ["green"],
+  "allowed_tools": ["run_poc", "fuzz"],
+  "isolation": { "require_sandbox": true },
+  "kill_after_denials": null
+}
