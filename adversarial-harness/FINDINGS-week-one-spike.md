@@ -15,7 +15,7 @@ Spike scratch dir: [`spike/`](./spike/) (in-repo scaffolding); raw responses in 
 ## TL;DR
 
 - **Format risk + neutrality (round-trip on local + hosted):** **resolved** — identical `run_shell` tool schema round-trips through Ollama `qwen3.6:latest` (local) and Fireworks `kimi-k3` (hosted); both emit well-formed `tool_calls` with parseable JSON args, only config swapped. No adapter needed.
-- **Fork chosen:** `<goose | opencode>` — `<one line why>` _(Day 2, pending)_
+- **Fork chosen:** **Goose 1.45.0** — both forks dispatched a tool end-to-end against Ollama, but Goose needs zero glue (native `ollama` provider) and its MCP-extension tools give the out-of-loop dispatch chokepoint the Day-3 mediation seam requires. OpenCode is the fallback.
 - **Mediation interception clean?** `<yes / no>` — `<one line>` _(Day 3, pending)_
 - **Capability signal (found w/ tools vs without):** `<one line>` _(Day 4–5, pending)_
 - **Overall verdict:** `<stack viable to proceed / needs rework because …>` _(pending Days 2–5)_
@@ -31,7 +31,9 @@ Spike scratch dir: [`spike/`](./spike/) (in-repo scaffolding); raw responses in 
   OpenAI-compatible `https://api.fireworks.ai/inference/v1`, `tool_choice: auto`, bearer key from
   `exploitgym-eval/.env` (`FIREWORKS_API_KEY`). Same request shape as local.
 - **(Optional) GPU backend:** not used — vLLM/`--tool-call-parser` re-check deferred to Day 4–5 (no NVIDIA GPU on this host).
-- **CLIs evaluated:** Goose `<rev>`, OpenCode `<rev>` _(Day 2, pending)_.
+- **CLIs evaluated:** Goose 1.45.0 (prebuilt `stable` aarch64-darwin binary), OpenCode 1.18.11
+  (prebuilt darwin-arm64 binary). Both installed + run out-of-repo in the session scratchpad
+  (`day2/`), configured against the same local Ollama endpoint; isolated via `XDG_*` dirs.
 - **Sandbox:** Docker 29.6.2 available; not exercised on Day 1 (nothing executes — round-trip only).
 - **Target (Day 4):** deliberately-vulnerable C (`vuln.c`, stack overflow) + clang
   libFuzzer/ASan _(pending)_.
@@ -65,15 +67,24 @@ Spike scratch dir: [`spike/`](./spike/) (in-repo scaffolding); raw responses in 
 
 ## Day 2 — Fork bake-off (Goose vs OpenCode)
 
-**ACCEPTANCE 2** (≥1 CLI dispatches a tool call end-to-end): `<PASS / FAIL>`
+**ACCEPTANCE 2** (≥1 CLI dispatches a tool call end-to-end): **PASS (both CLIs)**
+
+Both were installed as prebuilt binaries (no cargo/bun build) and pointed at the Day-1 local
+Ollama endpoint. Each was given the same task ("run `echo <marker>`, report stdout"); both had
+the model call a shell/bash tool, dispatched it, and returned the output to the model.
 
 | CLI | Provider config effort | Tool round-trip | Notes |
 |---|---|---|---|
-| Goose | `<…>` | `<clean / needed adapter / failed>` | `<…>` |
-| OpenCode | `<…>` | `<clean / needed adapter / failed>` | `<…>` |
+| Goose 1.45.0 | **none** — native `ollama` provider via env (`GOOSE_PROVIDER=ollama`, `GOOSE_MODEL=qwen3.6:latest`) | **clean** | builtin `developer`/shell extension fired with zero config; single-shot `goose run` returned in seconds |
+| OpenCode 1.18.11 | **small** — project `opencode.json` declaring an `ollama` provider (`@ai-sdk/openai-compatible`, `baseURL`, model list) | **clean (after warmup)** | first run stalled ~30-60s fetching the provider npm pkg (timed out at 2m on the first attempt); succeeded on a longer background run |
 
-- **Decision:** `<goose | opencode>` because `<…>`.
-- **Adapter required?** `<no | yes — describe the format translation>`.
+- **Decision:** **Goose.** Two reasons: (1) least glue — the native `ollama` provider round-trips
+  with no config file and no adapter, vs OpenCode's provider block + first-run package-fetch
+  latency; (2) the structural reason from `DESIGN.md` §4 L1 — Goose tools are **MCP extensions**, so
+  the offensive tool layer *and the mediation plane* live outside the agent loop as a governed
+  dispatch layer. That MCP dispatch chokepoint is exactly what Day 3's seam needs. OpenCode remains
+  the viable fallback (`DESIGN.md` §9).
+- **Adapter required?** **No** for either CLI — both parse the Ollama OpenAI-compatible tool format natively.
 
 ---
 
@@ -122,7 +133,7 @@ Spike scratch dir: [`spike/`](./spike/) (in-repo scaffolding); raw responses in 
   `tool_choice: auto`, shared schema `spike/schema/run_shell.tool.json`, no parser/template override.
   Reusable artifact captured in `spike/backends.conf`.
 - **Round-trip held on both?** **Yes** — ACCEPTANCE 1 PASS on local and hosted; neutrality proven day one.
-- **Fork chosen + why:** `<…>` _(Day 2, pending)_
+- **Fork chosen + why:** Goose 1.45.0 — least glue (native `ollama` provider, no config/adapter) + MCP-extension dispatch chokepoint for the mediation seam (`DESIGN.md` §4 L1). OpenCode fallback.
 - **Adapter needed?** **No** (at L3, for these two backends) — identical schema, identical response shape.
 - **Mediation interception clean?** `<…>` _(Day 3, pending)_
 - **Ablation result:** `<…>` _(Day 5, pending)_
