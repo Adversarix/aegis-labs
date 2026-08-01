@@ -43,8 +43,31 @@ Selecting a backend is configuration only (`DESIGN.md` §1.1). To retarget, edit
 The vLLM re-check (its `--tool-call-parser` is backend-specific) is deferred to
 Day 4–5 per the runbook.
 
-## Days 2–5
+## Days 2–5 (complete — all gates passed)
 
-Not yet scaffolded — this dir currently covers Day 1 only. Day 2 (Goose vs
-OpenCode fork bake-off) clones live outside the repo (they are large and
-throwaway); point their provider `base_url` at the same local endpoint used here.
+- **Day 2 (fork bake-off):** Goose chosen over OpenCode. The fork binaries are large
+  and throwaway, so they live outside the repo (installed into the session scratchpad).
+- **Day 3 (mediation seam):** `mediation-seam/` — an MCP stdio server Goose loads as
+  its only extension (`goose run --no-profile --with-extension`), so every tool call
+  crosses one logged chokepoint. Log-only this week.
+- **Day 4 (security tool + target):** `target/` — a deliberately-vulnerable C target in a
+  `--network none` container; `run_poc` and `fuzz` tools behind the seam. The agent found
+  and confirmed a stack-buffer-overflow.
+- **Day 5 (ablation):** with the tools the crash is confirmed with the ASan signal; reason-only
+  reaches the same root cause but cannot confirm it.
+
+See `../FINDINGS-week-one-spike.md` for the full write-up.
+
+### Reproduce Days 3–4
+
+```bash
+# build the sandbox image (apt clang at build time; runs are --network none)
+( cd target && docker build -t spike-fuzz:latest . )
+# install seam deps
+( cd mediation-seam && npm install )
+# run Goose with ONLY the mediation seam loaded, security tools behind it
+goose run --no-profile --no-session \
+  --with-extension "MEDIATION_LOG=$PWD/mediation-seam/day4.log SEAM_TOOLS=run_poc,fuzz node $PWD/mediation-seam/server.js" \
+  -t "Find an input that crashes this target ... (source inline)"
+# every tool call the model made is in day4.log
+```
