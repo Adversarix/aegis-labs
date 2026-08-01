@@ -18,10 +18,15 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /work
-COPY ret2win.c session_server.py /work/
+COPY ret2win.c ramp1.c session_server.py /work/
 
 # Build-first rung: mitigations OFF. NX left on (ret2win jumps to existing code).
 RUN gcc -fno-stack-protector -no-pie -g -O0 ret2win.c -o /work/ret2win \
  && file /work/ret2win
+
+# Mitigation-ramp rung 1: PIE + ASLR on (canary still off). Randomized win()
+# address per run; the leak-based flow is required to exploit it.
+RUN gcc -fno-stack-protector -pie -fPIE -g -O0 ramp1.c -o /work/ramp1 \
+ && file /work/ramp1
 
 ENV PYTHONUNBUFFERED=1 PWNLIB_NOTERM=1

@@ -34,6 +34,9 @@ export const TOOLS = {
   gadget_search:    { tier: "green", isolated: true },
   symbol:           { tier: "green", isolated: true },
   build_exploit:    { tier: "green", isolated: true },
+  // mitigation-ramp: info-leak primitive + leak-based exploit (defeat PIE/ASLR)
+  leak:               { tier: "green", isolated: true },
+  build_exploit_leak: { tier: "green", isolated: true },
 };
 
 // The default enforcing run scope: green tier, discovery tools only, sandbox
