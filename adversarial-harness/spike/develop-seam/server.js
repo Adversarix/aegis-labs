@@ -32,7 +32,7 @@ const IMAGE = process.env.SPIKE_DEVELOP_IMAGE || "spike-develop:latest";
 const SESSION_SERVER = process.env.SESSION_SERVER || new URL("../develop/session_server.py", import.meta.url).pathname;
 const MARKER_KEY = process.env.AEGIS_MARKER_KEY || randomBytes(32).toString("hex");
 const EXPOSE = (process.env.DEV_TOOLS ||
-  "mitigation_check,pattern,find_offset,debug,target_io,gadget_search,symbol,build_exploit,leak,build_exploit_leak,oob_read,build_exploit_canary,build_rop_call")
+  "mitigation_check,pattern,find_offset,debug,target_io,gadget_search,symbol,build_exploit,leak,build_exploit_leak,oob_read,build_exploit_canary,build_rop_call,build_exploit_combined")
   .split(",").map((s) => s.trim()).filter(Boolean);
 
 // Develop run scope: green tier, the develop tools, sandbox required.
@@ -148,6 +148,10 @@ reg("build_exploit_canary", "Canary-bypass ret2win: per run, leak the canary at 
 reg("build_rop_call", "Build and verify a ROP chain that calls func(arg) despite NX (for targets with no zero-arg win). Uses an x0-loading gadget: chain = <offset> filler + gadget_addr + arg (into x0) + address of func. Args: offset, gadget_addr (from gadget_search), func (default 'unlock'), arg (the magic value), times. Reports objective-marker reliability.",
   { offset: z.number().int().min(0), gadget_addr: z.number().int(), func: z.string().optional(), arg: z.number().int(), times: z.number().int().min(1).max(20).optional() },
   async ({ offset, gadget_addr, func, arg, times }) => gated("build_rop_call", { offset, gadget_addr, func: func ?? "unlock", arg, times: times ?? 5 }, "build_rop_call", { offset, gadget_addr, func: func ?? "unlock", arg, times: times ?? 5 }));
+
+reg("build_exploit_combined", "Capstone exploit for a PIE + canary target: per run, leak the canary (oob read at canary_offset) AND the randomized runtime address of win() (PIE code leak), then overwrite the return at ret_offset while preserving the canary. Chains both primitives. Args: canary_offset, ret_offset, times.",
+  { canary_offset: z.number().int().min(0), ret_offset: z.number().int().min(0), times: z.number().int().min(1).max(20).optional() },
+  async ({ canary_offset, ret_offset, times }) => gated("build_exploit_combined", { canary_offset, ret_offset, times: times ?? 5 }, "exploit_combined", { canary_offset, ret_offset, times: times ?? 5 }));
 
 reg("build_exploit", "Build and verify a ret2win: payload = <offset> filler + address of <win_symbol>, fired N times against the sandbox. Reports objective-marker reliability.",
   { offset: z.number().int().min(0), win_symbol: z.string().optional(), times: z.number().int().min(1).max(20).optional() },

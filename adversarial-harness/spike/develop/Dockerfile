@@ -26,7 +26,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /work
-COPY ret2win.c ramp1.c ramp2.c ramp3.c session_server.py /work/
+COPY ret2win.c ramp1.c ramp2.c ramp3.c ramp4.c session_server.py /work/
 
 # Build-first rung: mitigations OFF. NX left on (ret2win jumps to existing code).
 RUN gcc -fno-stack-protector -no-pie -g -O0 ret2win.c -o /work/ret2win \
@@ -46,5 +46,10 @@ RUN gcc -fstack-protector-all -no-pie -g -O0 ramp3.c -o /work/ramp3 \
 # ROP chain (set x0 = magic, call unlock) is required — no plain ret2win works.
 RUN gcc -fno-stack-protector -no-pie -g -O0 ramp2.c -o /work/ramp2 \
  && file /work/ramp2
+
+# Mitigation-ramp capstone: PIE + ASLR + canary + NX all at once. Requires
+# chaining a PIE leak and a canary leak in one exploit.
+RUN gcc -fstack-protector-all -pie -fPIE -g -O0 ramp4.c -o /work/ramp4 \
+ && file /work/ramp4
 
 ENV PYTHONUNBUFFERED=1 PWNLIB_NOTERM=1

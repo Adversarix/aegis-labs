@@ -42,6 +42,8 @@ export const TOOLS = {
   build_exploit_canary: { tier: "green", isolated: true },
   // mitigation-ramp rung 3: ROP chain to call a function with a controlled argument (defeat NX)
   build_rop_call:       { tier: "green", isolated: true },
+  // mitigation-ramp capstone: chain a PIE leak + a canary leak in one exploit
+  build_exploit_combined: { tier: "green", isolated: true },
 };
 
 // The default enforcing run scope: green tier, discovery tools only, sandbox
