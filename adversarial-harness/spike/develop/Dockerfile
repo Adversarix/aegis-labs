@@ -18,7 +18,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /work
-COPY ret2win.c ramp1.c session_server.py /work/
+COPY ret2win.c ramp1.c ramp3.c session_server.py /work/
 
 # Build-first rung: mitigations OFF. NX left on (ret2win jumps to existing code).
 RUN gcc -fno-stack-protector -no-pie -g -O0 ret2win.c -o /work/ret2win \
@@ -28,5 +28,10 @@ RUN gcc -fno-stack-protector -no-pie -g -O0 ret2win.c -o /work/ret2win \
 # address per run; the leak-based flow is required to exploit it.
 RUN gcc -fno-stack-protector -pie -fPIE -g -O0 ramp1.c -o /work/ramp1 \
  && file /work/ramp1
+
+# Mitigation-ramp rung 2: stack canary on (no-pie, NX on). A naive overflow
+# trips __stack_chk_fail; the canary must be leaked (oob-read) and preserved.
+RUN gcc -fstack-protector-all -no-pie -g -O0 ramp3.c -o /work/ramp3 \
+ && file /work/ramp3
 
 ENV PYTHONUNBUFFERED=1 PWNLIB_NOTERM=1

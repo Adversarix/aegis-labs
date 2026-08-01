@@ -24,10 +24,12 @@ a human exploit developer does, instead of stateless run-once calls.
 | `find_offset` | **persistent gdb** | crash under the debugger, read `pc`, map to offset (IAT) |
 | `debug` | **persistent gdb** | arbitrary gdb command; state persists across calls (IAT) |
 | `target_io` | pwntools process | live target I/O: start/send/recv/poll (IAT) |
-| `gadget_search` | pwntools ROP | ret/pop/syscall gadgets |
 | `build_exploit` | pwntools process | static ret2win (symbol offset); fails under PIE/ASLR |
-| `leak` | pwntools process | info-leak primitive: read the target's leaked runtime `&win` (mitigation ramp) |
-| `build_exploit_leak` | pwntools process | leak-based ret2win: per-run leak + payload; defeats ASLR (mitigation ramp) |
+| `leak` | pwntools process | info-leak primitive: read the target's leaked runtime `&win` (ramp: PIE/ASLR) |
+| `build_exploit_leak` | pwntools process | leak-based ret2win: per-run leak + payload; defeats ASLR (ramp: PIE/ASLR) |
+| `oob_read` | pwntools process | info-leak primitive: disclose 8 bytes at `buf+off`; leaks the stack canary (ramp: canary) |
+| `build_exploit_canary` | pwntools process | leak the canary, preserve it, overwrite return with win(); defeats the canary (ramp: canary) |
+| `gadget_search` | pwntools ROP | ret/pop/syscall gadgets — **currently unavailable on aarch64** (capstone/ROPgadget version mismatch; NX/ROP rung deferred) |
 
 ## Env
 
@@ -54,4 +56,7 @@ goose run --no-profile --with-extension \
 See [`../develop/FINDINGS-develop-stage.md`](../develop/FINDINGS-develop-stage.md) for the L4
 result and the with/without-debugger ablation, and
 [`../develop/FINDINGS-mitigation-ramp.md`](../develop/FINDINGS-mitigation-ramp.md) for the
-PIE/ASLR rung where the info-leak primitive is decisive (success vs failure).
+PIE/ASLR rung and
+[`../develop/FINDINGS-mitigation-ramp-canary.md`](../develop/FINDINGS-mitigation-ramp-canary.md)
+for the stack-canary rung — both cases where the info-leak primitive is decisive (success vs
+failure). The NX/ROP rung is deferred pending an aarch64 gadget-tooling fix (see the canary findings).
