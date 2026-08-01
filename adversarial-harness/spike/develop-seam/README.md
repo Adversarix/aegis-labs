@@ -29,7 +29,8 @@ a human exploit developer does, instead of stateless run-once calls.
 | `build_exploit_leak` | pwntools process | leak-based ret2win: per-run leak + payload; defeats ASLR (ramp: PIE/ASLR) |
 | `oob_read` | pwntools process | info-leak primitive: disclose 8 bytes at `buf+off`; leaks the stack canary (ramp: canary) |
 | `build_exploit_canary` | pwntools process | leak the canary, preserve it, overwrite return with win(); defeats the canary (ramp: canary) |
-| `gadget_search` | pwntools ROP | ret/pop/syscall gadgets — **currently unavailable on aarch64** (capstone/ROPgadget version mismatch; NX/ROP rung deferred) |
+| `gadget_search` | ROPgadget CLI | gadgets whose instructions contain a substring query (e.g. `x0, x30`); works on aarch64 after the image's capstone/ROPgadget fix (ramp: NX/ROP) |
+| `build_rop_call` | pwntools process | ROP chain to call `func(arg)` despite NX via an x0-loading gadget (ramp: NX/ROP) |
 
 ## Env
 
@@ -58,5 +59,7 @@ result and the with/without-debugger ablation, and
 [`../develop/FINDINGS-mitigation-ramp.md`](../develop/FINDINGS-mitigation-ramp.md) for the
 PIE/ASLR rung and
 [`../develop/FINDINGS-mitigation-ramp-canary.md`](../develop/FINDINGS-mitigation-ramp-canary.md)
-for the stack-canary rung — both cases where the info-leak primitive is decisive (success vs
-failure). The NX/ROP rung is deferred pending an aarch64 gadget-tooling fix (see the canary findings).
+for the stack-canary rung, and
+[`../develop/FINDINGS-mitigation-ramp-rop.md`](../develop/FINDINGS-mitigation-ramp-rop.md) for the
+NX/ROP rung (gadget search + ROP chain, after fixing the aarch64 gadget tooling) — all cases where
+the specialized primitive is decisive (success vs failure).
