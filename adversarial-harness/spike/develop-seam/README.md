@@ -25,13 +25,17 @@ a human exploit developer does, instead of stateless run-once calls.
 | `debug` | **persistent gdb** | arbitrary gdb command; state persists across calls (IAT) |
 | `target_io` | pwntools process | live target I/O: start/send/recv/poll (IAT) |
 | `gadget_search` | pwntools ROP | ret/pop/syscall gadgets |
-| `build_exploit` | pwntools process | build + verify a ret2win N×; reports objective-marker reliability |
+| `build_exploit` | pwntools process | static ret2win (symbol offset); fails under PIE/ASLR |
+| `leak` | pwntools process | info-leak primitive: read the target's leaked runtime `&win` (mitigation ramp) |
+| `build_exploit_leak` | pwntools process | leak-based ret2win: per-run leak + payload; defeats ASLR (mitigation ramp) |
 
 ## Env
 
 `SEAM_MODE` (enforcing|log-only), `MEDIATION_LOG`, `DEV_TOOLS` (allowlist of tools to expose;
-the ablation drops `debug,find_offset`), `AEGIS_MARKER_KEY`, `SPIKE_DEVELOP_IMAGE`,
-`SESSION_SERVER` (host path to `session_server.py` to mount).
+the ablations drop `debug,find_offset` or `leak,build_exploit_leak`), `AEGIS_MARKER_KEY`,
+`SPIKE_DEVELOP_IMAGE`, `SESSION_SERVER` (host path to `session_server.py` to mount),
+`SPIKE_TARGET` (which in-container binary to target: `/work/ret2win` default, `/work/ramp1`
+for the PIE/ASLR ramp rung).
 
 ## Run
 
@@ -48,4 +52,6 @@ goose run --no-profile --with-extension \
 ```
 
 See [`../develop/FINDINGS-develop-stage.md`](../develop/FINDINGS-develop-stage.md) for the L4
-result and the with/without-debugger ablation.
+result and the with/without-debugger ablation, and
+[`../develop/FINDINGS-mitigation-ramp.md`](../develop/FINDINGS-mitigation-ramp.md) for the
+PIE/ASLR rung where the info-leak primitive is decisive (success vs failure).

@@ -32,7 +32,7 @@ const IMAGE = process.env.SPIKE_DEVELOP_IMAGE || "spike-develop:latest";
 const SESSION_SERVER = process.env.SESSION_SERVER || new URL("../develop/session_server.py", import.meta.url).pathname;
 const MARKER_KEY = process.env.AEGIS_MARKER_KEY || randomBytes(32).toString("hex");
 const EXPOSE = (process.env.DEV_TOOLS ||
-  "mitigation_check,pattern,find_offset,debug,target_io,gadget_search,symbol,build_exploit")
+  "mitigation_check,pattern,find_offset,debug,target_io,gadget_search,symbol,build_exploit,leak,build_exploit_leak")
   .split(",").map((s) => s.trim()).filter(Boolean);
 
 // Develop run scope: green tier, the develop tools, sandbox required.
@@ -61,6 +61,7 @@ let child = null, buf = "", waiters = [], readyPromise = null;
 function ensureContainer() {
   if (child) return;
   child = spawn("docker", ["run", "-i", "--rm", "--network", "none", "--memory", "1g", "--cpus", "2",
+    "-e", `TARGET_BIN=${process.env.SPIKE_TARGET || "/work/ret2win"}`,
     "-v", `${SESSION_SERVER}:/work/session_server.py:ro`, IMAGE, "python3", "/work/session_server.py"],
     { stdio: ["pipe", "pipe", "inherit"] });
   child.stdout.setEncoding("utf8");
@@ -129,6 +130,13 @@ reg("target_io", "IAT: drive the live target process. action=start|send|recv|pol
 
 reg("gadget_search", "Search the target for common ROP gadgets (ret, pop rdi, syscall, ...).",
   { query: z.string().optional() }, async ({ query }) => gated("gadget_search", { query: query ?? "ret" }, "gadgets", { query: query ?? "ret" }));
+
+reg("leak", "Info-leak primitive: start the target and read the code pointer (&win) it leaks on startup. Under PIE/ASLR this address differs every run.",
+  {}, async () => gated("leak", {}, "leak"));
+
+reg("build_exploit_leak", "Leak-based ret2win for PIE/ASLR targets: per run, read the freshly-leaked win() address, then send <offset> filler + that address. Fires N times; reports objective-marker reliability.",
+  { offset: z.number().int().min(0), times: z.number().int().min(1).max(20).optional() },
+  async ({ offset, times }) => gated("build_exploit_leak", { offset, times: times ?? 5 }, "exploit_leak", { offset, times: times ?? 5 }));
 
 reg("build_exploit", "Build and verify a ret2win: payload = <offset> filler + address of <win_symbol>, fired N times against the sandbox. Reports objective-marker reliability.",
   { offset: z.number().int().min(0), win_symbol: z.string().optional(), times: z.number().int().min(1).max(20).optional() },
