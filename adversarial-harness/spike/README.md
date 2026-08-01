@@ -67,6 +67,16 @@ markers, kill-gate — and on a `deny` verdict the tool does not execute. See
 `cd mediation-seam && npm test`. Still green-tier; amber/red and dry-run-first
 remain deferred.
 
+### Post-spike milestone — develop stage (exploit dev)
+
+The develop-stage build-first slice (`../develop-stage.md` §8): a mitigations-off
+ret2win target ([`develop/`](./develop/)) and the exploit-dev tools including the
+**persistent-debugger Interactive Agent Tool**, behind the enforcing seam
+([`develop-seam/`](./develop-seam/)). An agent climbed the exploitation ladder to
+**L4** (working exploit firing a signed objective marker, 10/10). The
+with/without-debugger ablation and the ARM64 substrate note are in
+[`develop/FINDINGS-develop-stage.md`](./develop/FINDINGS-develop-stage.md).
+
 ### Reproduce Days 3–4
 
 ```bash
