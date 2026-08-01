@@ -37,6 +37,9 @@ export const TOOLS = {
   // mitigation-ramp: info-leak primitive + leak-based exploit (defeat PIE/ASLR)
   leak:               { tier: "green", isolated: true },
   build_exploit_leak: { tier: "green", isolated: true },
+  // mitigation-ramp rung 2: oob-read leak + canary-preserving exploit (defeat canary)
+  oob_read:             { tier: "green", isolated: true },
+  build_exploit_canary: { tier: "green", isolated: true },
 };
 
 // The default enforcing run scope: green tier, discovery tools only, sandbox

