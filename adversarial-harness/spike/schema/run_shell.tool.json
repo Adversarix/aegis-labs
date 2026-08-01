@@ -1,0 +1,19 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "run_shell",
+      "description": "Run a shell command and return stdout",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "cmd": {
+            "type": "string",
+            "description": "The shell command to execute"
+          }
+        },
+        "required": ["cmd"]
+      }
+    }
+  }
+]
