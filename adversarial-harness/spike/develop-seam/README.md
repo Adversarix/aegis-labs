@@ -32,6 +32,7 @@ a human exploit developer does, instead of stateless run-once calls.
 | `gadget_search` | ROPgadget CLI | gadgets whose instructions contain a substring query (e.g. `x0, x30`); works on aarch64 after the image's capstone/ROPgadget fix (ramp: NX/ROP) |
 | `build_rop_call` | pwntools process | ROP chain to call `func(arg)` despite NX via an x0-loading gadget (ramp: NX/ROP) |
 | `build_exploit_combined` | pwntools process | chain a canary leak + a PIE code leak in one exploit (ramp: PIE+canary capstone) |
+| `assess_robustness` | pwntools process | L5 measurement: reliability across ASLR runs as a distribution over batches; adaptive vs static; L5/L4 verdict |
 
 ## Env
 
