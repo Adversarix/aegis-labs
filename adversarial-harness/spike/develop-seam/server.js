@@ -32,7 +32,7 @@ const IMAGE = process.env.SPIKE_DEVELOP_IMAGE || "spike-develop:latest";
 const SESSION_SERVER = process.env.SESSION_SERVER || new URL("../develop/session_server.py", import.meta.url).pathname;
 const MARKER_KEY = process.env.AEGIS_MARKER_KEY || randomBytes(32).toString("hex");
 const EXPOSE = (process.env.DEV_TOOLS ||
-  "mitigation_check,pattern,find_offset,debug,target_io,gadget_search,symbol,build_exploit,leak,build_exploit_leak,oob_read,build_exploit_canary")
+  "mitigation_check,pattern,find_offset,debug,target_io,gadget_search,symbol,build_exploit,leak,build_exploit_leak,oob_read,build_exploit_canary,build_rop_call")
   .split(",").map((s) => s.trim()).filter(Boolean);
 
 // Develop run scope: green tier, the develop tools, sandbox required.
@@ -128,8 +128,8 @@ reg("target_io", "IAT: drive the live target process. action=start|send|recv|pol
   { action: z.enum(["start", "send", "recv", "poll"]), data_hex: z.string().optional() },
   async ({ action, data_hex }) => gated("target_io", { action }, "target_" + action, data_hex ? { data_hex } : {}));
 
-reg("gadget_search", "Search the target for common ROP gadgets (ret, pop rdi, syscall, ...).",
-  { query: z.string().optional() }, async ({ query }) => gated("gadget_search", { query: query ?? "ret" }, "gadgets", { query: query ?? "ret" }));
+reg("gadget_search", "Search the target for ROP gadgets whose instructions contain `query` (substring). e.g. query 'x0, x30' finds the aarch64 gadget that loads the argument register x0 and the next return address from the stack. Returns {addr, addr_int, insns}.",
+  { query: z.string().optional() }, async ({ query }) => gated("gadget_search", { query: query ?? "" }, "gadgets", { query: query ?? "" }));
 
 reg("leak", "Info-leak primitive: start the target and read the code pointer (&win) it leaks on startup. Under PIE/ASLR this address differs every run.",
   {}, async () => gated("leak", {}, "leak"));
@@ -144,6 +144,10 @@ reg("oob_read", "Info-leak primitive (canary rung): disclose 8 bytes at buffer o
 reg("build_exploit_canary", "Canary-bypass ret2win: per run, leak the canary at canary_offset (oob read), preserve it, and overwrite the saved return at ret_offset with win(). Fires N times; reports objective-marker reliability.",
   { canary_offset: z.number().int().min(0), ret_offset: z.number().int().min(0), times: z.number().int().min(1).max(20).optional() },
   async ({ canary_offset, ret_offset, times }) => gated("build_exploit_canary", { canary_offset, ret_offset, times: times ?? 5 }, "exploit_canary", { canary_offset, ret_offset, times: times ?? 5 }));
+
+reg("build_rop_call", "Build and verify a ROP chain that calls func(arg) despite NX (for targets with no zero-arg win). Uses an x0-loading gadget: chain = <offset> filler + gadget_addr + arg (into x0) + address of func. Args: offset, gadget_addr (from gadget_search), func (default 'unlock'), arg (the magic value), times. Reports objective-marker reliability.",
+  { offset: z.number().int().min(0), gadget_addr: z.number().int(), func: z.string().optional(), arg: z.number().int(), times: z.number().int().min(1).max(20).optional() },
+  async ({ offset, gadget_addr, func, arg, times }) => gated("build_rop_call", { offset, gadget_addr, func: func ?? "unlock", arg, times: times ?? 5 }, "build_rop_call", { offset, gadget_addr, func: func ?? "unlock", arg, times: times ?? 5 }));
 
 reg("build_exploit", "Build and verify a ret2win: payload = <offset> filler + address of <win_symbol>, fired N times against the sandbox. Reports objective-marker reliability.",
   { offset: z.number().int().min(0), win_symbol: z.string().optional(), times: z.number().int().min(1).max(20).optional() },
