@@ -132,8 +132,8 @@ need the ExploitGym clone + an x86_64 sandbox — see [`exploitgym-adapter/READM
 
 [`compare/`](./compare/) runs the same develop task through the same contained seam across several
 models (swapped by config) and produces a leaderboard, using the mediation log to turn "solved or
-not" into "how it failed". First result on the PIE/ASLR task, spanning a local backend (Ollama) and a hosted one (Fireworks):
-hosted kimi-k3 and local qwen3.6:latest solved it cleanly in 3 calls (kimi fastest at 14s), while the
+not" into "how it failed". First result on the PIE/ASLR task, spanning a local backend (Ollama) and two hosted ones (Fireworks, DashScope):
+qwen3-max, kimi-k3, and the qwen3.6 family solved it cleanly in 3 calls (qwen3-max fastest at 11s), while the
 smaller/older models failed by distinct traceable modes — all under identical containment (0 denials).
 The neutrality claim holds local and hosted by a config swap; run-to-run non-determinism is visible
 (a model flipped solved/failed across batches), which is why a converged comparison reports a range.

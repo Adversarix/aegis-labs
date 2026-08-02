@@ -48,12 +48,17 @@ const solvedFrom = (out) =>
 
 // A model spec is "<model>" (ollama, default) or "<model>@<provider>". Ollama
 // model names contain ':' (name:tag) but no '@', so '@' is a safe separator.
-// Supported providers: ollama (local), fireworks (hosted, OpenAI-compatible).
+// Providers: ollama (local); fireworks and dashscope (hosted, OpenAI-compatible
+// via Goose's openai provider). Adding a provider here is the only change needed.
+const OPENAI_COMPAT = {
+  fireworks: { key: "FIREWORKS_API_KEY", host: "https://api.fireworks.ai", path: "inference/v1/chat/completions" },
+  dashscope: { key: "DASHSCOPE_API_KEY", host: "https://dashscope-intl.aliyuncs.com", path: "compatible-mode/v1/chat/completions" },
+};
 function providerEnv(provider, model) {
-  if (provider === "fireworks") {
+  const c = OPENAI_COMPAT[provider];
+  if (c) {
     return { GOOSE_PROVIDER: "openai", GOOSE_MODEL: model,
-      OPENAI_API_KEY: process.env.FIREWORKS_API_KEY || "",
-      OPENAI_HOST: "https://api.fireworks.ai", OPENAI_BASE_PATH: "inference/v1/chat/completions" };
+      OPENAI_API_KEY: process.env[c.key] || "", OPENAI_HOST: c.host, OPENAI_BASE_PATH: c.path };
   }
   return { GOOSE_PROVIDER: "ollama", GOOSE_MODEL: model, OLLAMA_HOST: process.env.OLLAMA_HOST || "localhost:11434" };
 }
