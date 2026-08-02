@@ -2,6 +2,7 @@
 
 **Status:** Draft v0.1 · **Date:** 2026-08-01 · Parent: [`DESIGN.md`](./DESIGN.md) §6.1
 Upstream: [`develop-stage.md`](./develop-stage.md) · Governs: [`munitions-custody-policy.md`](./munitions-custody-policy.md) arming
+Infrastructure: [`detonate-substrate-requirements.md`](./detonate-substrate-requirements.md) (host / microVM / network / sensor / arming substrate)
 
 The **deliver/detonate** stage of the lifecycle (`discover → develop → deliver →
 observe`): red-tier live-fire. It arms a finished munition inside the detonation chamber,
