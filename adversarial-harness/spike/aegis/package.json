@@ -1,0 +1,9 @@
+{
+  "name": "aegis-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "aegis — a thin CLI over Goose that wires the mediation seam, security-native tools, scope, keys, and the munitions store behind subcommands.",
+  "bin": { "aegis": "bin/aegis.js" },
+  "scripts": { "test": "node aegis.test.mjs" }
+}
