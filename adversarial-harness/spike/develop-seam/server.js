@@ -25,14 +25,19 @@ import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { evaluate, TOOLS, DEFAULT_SCOPE } from "../mediation-seam/policy.js";
 import { signMarker } from "../mediation-seam/marker.js";
+import { openStore } from "../munitions-store/store.js";
 
 const MODE = (process.env.SEAM_MODE || "enforcing").toLowerCase();
 const LOG = process.env.MEDIATION_LOG || new URL("./mediation.log", import.meta.url).pathname;
 const IMAGE = process.env.SPIKE_DEVELOP_IMAGE || "spike-develop:latest";
 const SESSION_SERVER = process.env.SESSION_SERVER || new URL("../develop/session_server.py", import.meta.url).pathname;
 const MARKER_KEY = process.env.AEGIS_MARKER_KEY || randomBytes(32).toString("hex");
+// Munitions store for the discovery->develop handoff (shared via AEGIS_STORE).
+const STORE = process.env.AEGIS_STORE
+  ? openStore(process.env.AEGIS_STORE, { key: process.env.AEGIS_STORE_KEY || MARKER_KEY })
+  : null;
 const EXPOSE = (process.env.DEV_TOOLS ||
-  "mitigation_check,pattern,find_offset,debug,target_io,gadget_search,symbol,build_exploit,leak,build_exploit_leak,oob_read,build_exploit_canary,build_rop_call,build_exploit_combined,assess_robustness")
+  "mitigation_check,pattern,find_offset,debug,target_io,gadget_search,symbol,build_exploit,leak,build_exploit_leak,oob_read,build_exploit_canary,build_rop_call,build_exploit_combined,assess_robustness,ingest_munition,record_progress,list_munitions")
   .split(",").map((s) => s.trim()).filter(Boolean);
 
 // Develop run scope: green tier, the develop tools, sandbox required.
@@ -105,6 +110,16 @@ async function gated(tool, args, op, opArgs) {
   return { content: [{ type: "text", text: JSON.stringify(r, null, 2) }] };
 }
 
+// Custody tools run against the shared munitions store on the host (NOT the
+// sandbox container). Still cross the mediation gate; no docker involved.
+function storeOp(tool, args, fn) {
+  const v = mediate(tool, args);
+  if (v.decision !== "allow") return deny(v);
+  if (!STORE) return { content: [{ type: "text", text: '{"error":"no munitions store configured (set AEGIS_STORE)"}' }] };
+  try { return { content: [{ type: "text", text: JSON.stringify(fn(v), null, 2) }] }; }
+  catch (e) { return { content: [{ type: "text", text: JSON.stringify({ error: String(e.message || e) }) }] }; }
+}
+
 const server = new McpServer({ name: "develop-seam", version: "0.1.0" });
 const reg = (name, desc, schema, handler) => { if (EXPOSE.includes(name)) server.registerTool(name, { description: desc, inputSchema: schema }, handler); };
 
@@ -170,6 +185,26 @@ reg("build_exploit", "Build and verify a ret2win: payload = <offset> filler + ad
     const payload = Buffer.concat([Buffer.alloc(offset, 0x41), le]);
     const r = await sess("exploit", { payload_hex: payload.toString("hex"), times: times ?? 5, marker: v.marker?.hmac });
     return { content: [{ type: "text", text: JSON.stringify({ win: sym.addr_hex, offset, ...r }, null, 2) }] };
+  });
+
+// ---- custody: develop-side of the discovery->develop handoff ----
+reg("list_munitions", "List munitions in the shared store (id, state, ownership, exploitation level).",
+  {}, async () => storeOp("list_munitions", {}, () => STORE.list()));
+
+reg("ingest_munition", "Ingest a promoted munition from the store to work it up the ladder: returns its decrypted reproducer + recipe + crash report, and logs an access event.",
+  { id: z.string() }, async ({ id }) => storeOp("ingest_munition", { id }, () => STORE.open(id, { run_id: SCOPE.run_id })));
+
+reg("record_progress", "Record develop-stage progress back onto a munition: exploitation level (crash|triaged|primitive|control|exploit|robust), primitives, mitigations_defeated, reliability.",
+  { id: z.string(), level: z.string().optional(), primitives: z.array(z.string()).optional(),
+    mitigations_defeated: z.array(z.string()).optional(), reliability: z.number().optional(), objective: z.string().optional() },
+  async ({ id, level, primitives, mitigations_defeated, reliability, objective }) => {
+    const patch = {};
+    if (level !== undefined) patch.level = level;
+    if (primitives !== undefined) patch.primitives = primitives;
+    if (mitigations_defeated !== undefined) patch.mitigations_defeated = mitigations_defeated;
+    if (reliability !== undefined) patch.reliability = reliability;
+    if (objective !== undefined) patch.objective = objective;
+    return storeOp("record_progress", { id, fields: Object.keys(patch) }, () => STORE.update(id, patch, { run_id: SCOPE.run_id }));
   });
 
 const transport = new StdioServerTransport();

@@ -46,6 +46,14 @@ export const TOOLS = {
   build_exploit_combined: { tier: "green", isolated: true },
   // L5 robust: certify reliability across ASLR-randomized runs (a measurement)
   assess_robustness:      { tier: "green", isolated: true },
+  // Munitions custody / discovery->develop handoff. Bookkeeping over encrypted
+  // metadata, no target blast radius, so isolated (they act on no target at all).
+  // Note: arm/export/dispose are NOT agent tools — those are human-authorized and
+  // live only on the store library's custodian path (munitions-custody-policy.md §6).
+  promote_finding:  { tier: "green", isolated: true },
+  ingest_munition:  { tier: "green", isolated: true },
+  record_progress:  { tier: "green", isolated: true },
+  list_munitions:   { tier: "green", isolated: true },
 };
 
 // The default enforcing run scope: green tier, discovery tools only, sandbox
@@ -54,7 +62,7 @@ export const TOOLS = {
 export const DEFAULT_SCOPE = {
   run_id: "spike-green-run",
   allowed_tiers: ["green"],
-  allowed_tools: ["run_poc", "fuzz"],
+  allowed_tools: ["run_poc", "fuzz", "promote_finding"],
   isolation: { require_sandbox: true },
 };
 
