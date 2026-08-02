@@ -106,3 +106,15 @@ still crosses the enforcing gate. See [`munitions-store/README.md`](./munitions-
 ( cd munitions-store && node store.test.mjs )         # 20 store unit tests
 ( cd develop-seam && node handoff-test.mjs )          # end-to-end handoff through both seams
 ```
+
+### Entry point — the `aegis` CLI
+
+[`aegis/`](./aegis/) is a thin CLI over Goose that packages the seam wiring, scope, keys, model
+selection, and the munitions store behind subcommands (`aegis develop --target ramp1
+--interactive`, `aegis store dispose <id> --role custodian --actor alice`, `aegis doctor`). It does
+not fork Goose. See [`aegis/README.md`](./aegis/README.md).
+
+```bash
+node aegis/bin/aegis.js init && node aegis/bin/aegis.js doctor
+( cd aegis && node aegis.test.mjs )   # 20 CLI tests
+```
