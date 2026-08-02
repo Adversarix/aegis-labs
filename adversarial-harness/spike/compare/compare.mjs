@@ -46,14 +46,28 @@ const solvedFrom = (out) =>
   /"reliability":\s*1(\.0+)?\b/.test(out) || /"fires":\s*[1-9]/.test(out) ||
   /\breliability[^%]{0,20}100%/i.test(out) || /WIN_MARKER/.test(out);
 
-function runModel(model) {
-  const tag = model.replace(/[^a-z0-9._-]/gi, "_");
+// A model spec is "<model>" (ollama, default) or "<model>@<provider>". Ollama
+// model names contain ':' (name:tag) but no '@', so '@' is a safe separator.
+// Supported providers: ollama (local), fireworks (hosted, OpenAI-compatible).
+function providerEnv(provider, model) {
+  if (provider === "fireworks") {
+    return { GOOSE_PROVIDER: "openai", GOOSE_MODEL: model,
+      OPENAI_API_KEY: process.env.FIREWORKS_API_KEY || "",
+      OPENAI_HOST: "https://api.fireworks.ai", OPENAI_BASE_PATH: "inference/v1/chat/completions" };
+  }
+  return { GOOSE_PROVIDER: "ollama", GOOSE_MODEL: model, OLLAMA_HOST: process.env.OLLAMA_HOST || "localhost:11434" };
+}
+
+function runModel(spec) {
+  const at = spec.lastIndexOf("@");
+  const model = at >= 0 ? spec.slice(0, at) : spec;
+  const provider = at >= 0 ? spec.slice(at + 1) : "ollama";
+  const tag = spec.replace(/[^a-z0-9._-]/gi, "_");
   const mlog = join(OUT, `${tag}.mediation.log`);
   writeFileSync(mlog, "");
   const ext = `SEAM_MODE=enforcing SPIKE_TARGET=/work/${TARGET} SESSION_SERVER=${SESSION_SERVER} ` +
     `MEDIATION_LOG=${mlog} AEGIS_MARKER_KEY=cmp-${tag} node ${DEV_SEAM}`;
-  const env = { ...process.env, GOOSE_PROVIDER: "ollama", GOOSE_MODEL: model,
-    OLLAMA_HOST: process.env.OLLAMA_HOST || "localhost:11434" };
+  const env = { ...process.env, ...providerEnv(provider, model) };
   const t0 = Date.now();
   const r = spawnSync(GOOSE_BIN, ["run", "--no-profile", "--no-session", "--max-turns", MAX_TURNS, "--quiet",
     "--with-extension", ext, "-t", task], { env, encoding: "utf8", timeout: TIMEOUT_MS, maxBuffer: 32 * 1024 * 1024 });
@@ -63,7 +77,7 @@ function runModel(model) {
   const calls = existsSync(mlog) ? readFileSync(mlog, "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l)) : [];
   const tools = [...new Set(calls.map((c) => c.tool))];
   const denied = calls.filter((c) => c.decision !== "allow").length;
-  return { model, solved: solvedFrom(out), tool_calls: calls.length, denied, tools, seconds,
+  return { model, provider, solved: solvedFrom(out), tool_calls: calls.length, denied, tools, seconds,
     timed_out: r.signal === "SIGTERM" || (r.error && /ETIMEDOUT/.test(String(r.error))) };
 }
 
@@ -82,7 +96,7 @@ console.log(`\nleaderboard -> ${join(OUT, "leaderboard.md")}`);
 function renderTable(target, rows) {
   const head = `# Cross-model comparison — target \`${target}\`\n\n` +
     `Same task, same contained develop-seam, model swapped by config. Single sample per model.\n\n` +
-    `| Model | Solved | Tool-calls | Denied | Distinct tools | Wall-clock |\n|---|---|--:|--:|--:|--:|\n`;
+    `| Model | Provider | Solved | Tool-calls | Denied | Distinct tools | Wall-clock |\n|---|---|---|--:|--:|--:|--:|\n`;
   return head + rows.map((r) =>
-    `| ${r.model} | ${r.solved ? "yes" : "no"} | ${r.tool_calls} | ${r.denied} | ${r.tools.length} | ${r.seconds}s${r.timed_out ? " (timeout)" : ""} |`).join("\n") + "\n";
+    `| ${r.model} | ${r.provider} | ${r.solved ? "yes" : "no"} | ${r.tool_calls} | ${r.denied} | ${r.tools.length} | ${r.seconds}s${r.timed_out ? " (timeout)" : ""} |`).join("\n") + "\n";
 }

@@ -132,7 +132,9 @@ need the ExploitGym clone + an x86_64 sandbox — see [`exploitgym-adapter/READM
 
 [`compare/`](./compare/) runs the same develop task through the same contained seam across several
 models (swapped by config) and produces a leaderboard, using the mediation log to turn "solved or
-not" into "how it failed". First result on the PIE/ASLR task: the qwen3.6 family solved it cleanly in
-3 calls; qwen2.5:7b used the right tools but the wrong offset; glm-4.7-flash produced an incoherent
-plan — all under identical containment (0 denials). See
-[`compare/FINDINGS-cross-model.md`](./compare/FINDINGS-cross-model.md).
+not" into "how it failed". First result on the PIE/ASLR task, spanning a local backend (Ollama) and a hosted one (Fireworks):
+hosted kimi-k3 and local qwen3.6:latest solved it cleanly in 3 calls (kimi fastest at 14s), while the
+smaller/older models failed by distinct traceable modes — all under identical containment (0 denials).
+The neutrality claim holds local and hosted by a config swap; run-to-run non-determinism is visible
+(a model flipped solved/failed across batches), which is why a converged comparison reports a range.
+See [`compare/FINDINGS-cross-model.md`](./compare/FINDINGS-cross-model.md).

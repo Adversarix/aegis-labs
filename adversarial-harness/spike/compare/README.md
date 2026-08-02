@@ -11,15 +11,21 @@ Because every action is a mediated tool call, the mediation log per model turns 
 ## Run
 
 ```bash
-GOOSE_BIN=<path-to-goose> node compare.mjs \
+FIREWORKS_API_KEY=... GOOSE_BIN=<path-to-goose> node compare.mjs \
   --target ramp1 \
-  --models qwen3.6:latest,qwen3.6:35b-a3b,qwen2.5:7b,glm-4.7-flash:latest \
-  --max-turns 12 --timeout 300 --out runs/ramp1
+  --models "accounts/fireworks/models/kimi-k3@fireworks,qwen3.6:latest,qwen3.6:35b-a3b,qwen2.5:7b,glm-4.7-flash:latest" \
+  --max-turns 12 --timeout 300 --out runs/ramp1-hosted
 ```
 
 Options: `--target` (`ramp1` | `ret2win`), `--models` (comma list), `--max-turns`, `--timeout`
-(seconds per model), `--out`. Env: `GOOSE_BIN`, `OLLAMA_HOST`. Models run sequentially; the
-leaderboard is written incrementally so progress survives.
+(seconds per model), `--out`. Env: `GOOSE_BIN`, `OLLAMA_HOST`, `FIREWORKS_API_KEY` (for hosted).
+Models run sequentially; the leaderboard is written incrementally so progress survives.
+
+**Providers.** A model spec is `<model>` (local Ollama, the default) or `<model>@<provider>`.
+`provider` is `ollama` or `fireworks` (hosted, OpenAI-compatible via Goose's openai provider). Ollama
+names contain `:` (name:tag) but no `@`, so `@` is a safe separator. Example including a hosted model:
+`accounts/fireworks/models/kimi-k3@fireworks`. Adding a hosted model is a config swap, nothing else —
+the same seam, tools, and mediation plane apply.
 
 ## Output (per `--out` dir)
 
