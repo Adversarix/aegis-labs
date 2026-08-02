@@ -118,3 +118,12 @@ not fork Goose. See [`aegis/README.md`](./aegis/README.md).
 node aegis/bin/aegis.js init && node aegis/bin/aegis.js doctor
 ( cd aegis && node aegis.test.mjs )   # 20 CLI tests
 ```
+
+### ExploitGym Path-B adapter
+
+[`exploitgym-adapter/`](./exploitgym-adapter/) runs a model against an ExploitGym-style task
+*through* the contained develop-seam (our tools + mediation), then emits an ExploitGym-compatible
+result the `exploitgym-eval` scorer consumes — Path B to exploitgym-eval's Path A. The develop-seam
+gained `AEGIS_TASK_BINARY` to mount an arbitrary target. Proven against a local aarch64 fixture (both
+a scripted solver and a live agent capture the flag through our gated tools). Real ExploitGym tasks
+need the ExploitGym clone + an x86_64 sandbox — see [`exploitgym-adapter/README.md`](./exploitgym-adapter/README.md).
