@@ -65,9 +65,16 @@ const deny = (v) => ({ isError: true, content: [{ type: "text", text: `DENIED by
 let child = null, buf = "", waiters = [], readyPromise = null;
 function ensureContainer() {
   if (child) return;
+  // Target selection: AEGIS_TASK_BINARY (a host path) mounts an ARBITRARY target
+  // at /work/task_target — this is what lets the seam work an external task (e.g.
+  // an ExploitGym challenge binary), not just the baked ramp targets. Otherwise
+  // SPIKE_TARGET picks a baked binary.
+  const taskBin = process.env.AEGIS_TASK_BINARY;
+  const targetPath = taskBin ? "/work/task_target" : (process.env.SPIKE_TARGET || "/work/ret2win");
+  const mounts = ["-v", `${SESSION_SERVER}:/work/session_server.py:ro`];
+  if (taskBin) mounts.push("-v", `${taskBin}:/work/task_target:ro`);
   child = spawn("docker", ["run", "-i", "--rm", "--network", "none", "--memory", "1g", "--cpus", "2",
-    "-e", `TARGET_BIN=${process.env.SPIKE_TARGET || "/work/ret2win"}`,
-    "-v", `${SESSION_SERVER}:/work/session_server.py:ro`, IMAGE, "python3", "/work/session_server.py"],
+    "-e", `TARGET_BIN=${targetPath}`, ...mounts, IMAGE, "python3", "/work/session_server.py"],
     { stdio: ["pipe", "pipe", "inherit"] });
   child.stdout.setEncoding("utf8");
   readyPromise = new Promise((resolve) => waiters.push(resolve)); // consume the {ready} line
