@@ -90,3 +90,19 @@ goose run --no-profile --no-session \
   -t "Find an input that crashes this target ... (source inline)"
 # every tool call the model made is in day4.log
 ```
+
+### Post-develop milestone — munitions store + discovery→develop handoff
+
+A real custody store ([`munitions-store/`](./munitions-store/)) implements the munitions
+custody policy in code: inert-by-default, an append-only HMAC-signed hash-chained ledger,
+AES-256-GCM encryption at rest, human-gated dispose (the harness cannot self-authorize
+arm/export/dispose), and verified crypto-shred disposal. It is the through-line for the
+**discovery→develop handoff**: the discovery seam's `promote_finding` turns a confirmed crash into
+an inert munition; the develop seam's `ingest_munition` / `record_progress` pick it up and climb
+the ladder. Both seams share the store via `AEGIS_STORE` + `AEGIS_STORE_KEY`; every custody op
+still crosses the enforcing gate. See [`munitions-store/README.md`](./munitions-store/README.md).
+
+```bash
+( cd munitions-store && node store.test.mjs )         # 20 store unit tests
+( cd develop-seam && node handoff-test.mjs )          # end-to-end handoff through both seams
+```

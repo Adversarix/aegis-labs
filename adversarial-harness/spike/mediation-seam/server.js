@@ -35,13 +35,19 @@ import { execSync, execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { evaluate, TOOLS, DEFAULT_SCOPE } from "./policy.js";
 import { signMarker } from "./marker.js";
+import { openStore } from "../munitions-store/store.js";
 
 const MODE = (process.env.SEAM_MODE || "enforcing").toLowerCase();
 const LOG = process.env.MEDIATION_LOG || new URL("./mediation.log", import.meta.url).pathname;
 const IMAGE = process.env.SPIKE_IMAGE || "spike-fuzz:latest";
-const ALLOW_EXPOSE = (process.env.SEAM_TOOLS || "run_shell,run_poc,fuzz")
+const ALLOW_EXPOSE = (process.env.SEAM_TOOLS || "run_shell,run_poc,fuzz,promote_finding")
   .split(",").map((s) => s.trim()).filter(Boolean);
 const MARKER_KEY = process.env.AEGIS_MARKER_KEY || randomBytes(32).toString("hex");
+// Munitions store for the discovery->develop handoff. Shared across seams via
+// AEGIS_STORE (dir) + AEGIS_STORE_KEY (defaults to the run marker key).
+const STORE = process.env.AEGIS_STORE
+  ? openStore(process.env.AEGIS_STORE, { key: process.env.AEGIS_STORE_KEY || MARKER_KEY })
+  : null;
 const SCOPE = process.env.AEGIS_SCOPE ? JSON.parse(readFileSync(process.env.AEGIS_SCOPE, "utf8")) : DEFAULT_SCOPE;
 
 const KILL = { killed: false, reason: "" };
@@ -184,6 +190,36 @@ if (ALLOW_EXPOSE.includes("fuzz")) {
       const text = `crashed=${crashed}\nexit=${r.code}\n` +
         (crashed ? `--- ASan ---\n${summary}\n` : `--- no crash found in ${secs}s ---\n`);
       return { content: [{ type: "text", text }] };
+    }
+  );
+}
+
+// ---- promote_finding (green, custody): discovery -> develop handoff ----
+// Promote a confirmed crash into an inert munition in the shared store. This is
+// the discovery-side of the handoff (discovery-stage.md §6 -> develop-stage.md §1).
+if (ALLOW_EXPOSE.includes("promote_finding")) {
+  server.registerTool(
+    "promote_finding",
+    { description:
+        "Promote a CONFIRMED crash into the munitions store as an inert munition " +
+        "(exploitation_level = crash), so the develop stage can ingest it. Provide the " +
+        "crashing input (hex), the build recipe, and the crash report.",
+      inputSchema: {
+        reproducer_input_hex: z.string().describe("the crashing input, hex-encoded"),
+        recipe: z.string().describe("how the target is built/run to reproduce"),
+        crash_report: z.string().describe("the crash signal / sanitizer summary"),
+        finding_id: z.string().optional(),
+      } },
+    async ({ reproducer_input_hex, recipe, crash_report, finding_id }) => {
+      const v = mediate("promote_finding", { finding_id, bytes: (reproducer_input_hex.length / 2) | 0 });
+      if (v.decision !== "allow") return denyResult(v);
+      if (!STORE) return { isError: true, content: [{ type: "text", text: "no munitions store configured (set AEGIS_STORE)" }] };
+      const m = STORE.create({
+        origin: "discovered",
+        artifact: { reproducer_input_hex, recipe, crash_report },
+        provenance: { finding_id: finding_id ?? null, run_id: SCOPE.run_id, marker: v.marker?.hmac },
+      });
+      return { content: [{ type: "text", text: JSON.stringify(m, null, 2) }] };
     }
   );
 }
