@@ -30,6 +30,7 @@ Run options (discover/develop):
   -i, --instructions <f>   instruction file
   -s, --interactive        interactive session (converse turn by turn)
       --max-turns <n>      cap agent turns
+      --binary <path>      mount an arbitrary aarch64 ELF as the target (develop; overrides --target)
       --model <m>          override model for this run
       --provider <p>       override provider (ollama|hosted)
       --dry-run            print the Goose command instead of running it
@@ -45,13 +46,13 @@ function doRun(kind, argv) {
   const { values } = parseArgs({ args: argv, options: {
     task: { type: "string", short: "t" }, instructions: { type: "string", short: "i" },
     interactive: { type: "boolean", short: "s" }, "max-turns": { type: "string" },
-    target: { type: "string" }, model: { type: "string" }, provider: { type: "string" },
+    target: { type: "string" }, binary: { type: "string" }, model: { type: "string" }, provider: { type: "string" },
     "dry-run": { type: "boolean" },
   }, allowPositionals: true });
   const cfg = applyOverrides(ensureInitialized(), values);
   const run = buildRun(kind, cfg, {
     task: values.task, instructions: values.instructions, interactive: values.interactive,
-    maxTurns: values["max-turns"], target: values.target,
+    maxTurns: values["max-turns"], target: values.target, binary: values.binary,
   });
   if (values["dry-run"]) {
     console.log(`# provider=${cfg.provider} model=${cfg.model} store=${cfg.store_dir}`);

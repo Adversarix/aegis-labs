@@ -116,7 +116,7 @@ not fork Goose. See [`aegis/README.md`](./aegis/README.md).
 
 ```bash
 node aegis/bin/aegis.js init && node aegis/bin/aegis.js doctor
-( cd aegis && node aegis.test.mjs )   # 20 CLI tests
+( cd aegis && node aegis.test.mjs )   # 26 CLI tests
 ```
 
 ### ExploitGym Path-B adapter

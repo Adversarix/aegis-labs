@@ -28,8 +28,15 @@ aegis store <list|show|verify|dispose> [args]   custody store (human path)
 ```
 
 Run options (discover/develop): `-t/--task`, `-i/--instructions`, `-s/--interactive`,
-`--max-turns`, `--model`, `--provider`, `--dry-run`. Develop targets:
+`--max-turns`, `--binary <path>`, `--model`, `--provider`, `--dry-run`. Develop targets:
 `ret2win, ramp1, ramp2, ramp3, ramp4`.
+
+`--binary <path>` (develop) points the run at an arbitrary target instead of a baked one: the
+seam mounts it read-only at `/work/task_target` (via `AEGIS_TASK_BINARY`) and it overrides
+`--target`. The file may live anywhere on the host. It is preflighted as a **64-bit aarch64 ELF**
+(the develop sandbox is Linux/arm64) and rejected fast with a clear reason otherwise — a macOS
+Mach-O, a script, or a 32-bit / x86-64 ELF would not execute (x86_64 targets need an x86_64
+sandbox, not yet provisioned).
 
 ## What it wires for you
 
@@ -49,6 +56,8 @@ aegis init
 aegis doctor
 # converse turn by turn against a PIE/ASLR target:
 aegis develop --target ramp1 --interactive
+# point develop at your own aarch64 ELF (mounted read-only, arch-checked):
+aegis develop --binary /path/to/your/target --interactive
 # one-shot, print the exact Goose command without running it:
 aegis develop --target ramp4 -t "leak the canary and win()'s address, then chain them" --dry-run
 # custody: list, verify integrity, and dispose (human-authorized) a munition:
@@ -60,7 +69,7 @@ aegis store dispose <id> --role custodian --actor alice --reason "study closed"
 ## Tests
 
 ```bash
-node aegis.test.mjs   # 20 tests: config, command construction, target validation, store path
+node aegis.test.mjs   # 26 tests: config, command construction, --binary arch check, target validation, store path
 ```
 
 ## Not covered here (by design)
