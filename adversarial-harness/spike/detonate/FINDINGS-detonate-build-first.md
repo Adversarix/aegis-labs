@@ -1,6 +1,6 @@
 # Detonate Stage — Build-First Findings
 
-**Status:** control plane complete + verified; real substrate pending a live KVM host · **Date:** 2026-08-03
+**Status:** control plane complete + verified; teardown-under-kill also proven on a REAL Firecracker microVM · **Date:** 2026-08-03
 Spec: [`../../detonate-stage.md`](./../../detonate-stage.md) §9 · [`../../detonate-substrate-requirements.md`](./../../detonate-substrate-requirements.md)
 
 The red-tier detonation chamber's **control plane** is built and verified. A real detonation of a
@@ -44,6 +44,29 @@ provide hardware isolation, and it says so (`isolates() === false`, and `assertN
 munitions on it. The blast-radius guarantee — a real payload with a kernel exploit cannot escape —
 is a property of the microVM substrate, not of this harness. The control plane is correct; the
 containment guarantee is only as strong as the substrate under it.
+
+## Verified on a REAL Firecracker microVM (2026-08-03)
+
+The load-bearing gate now holds on actual hardware virtualization, not just the control-plane
+substrate. On the provisioned GCP host `crucible-fc-host` (n2-standard-4, x86_64, Ubuntu 22.04,
+kernel 6.8-gcp, `/dev/kvm` present with nested virt, firecracker v1.16.1, staged guest kernel +
+6GB rootfs):
+
+- Booted one disposable microVM from a **disposable overlay off a read-only base** (the base image
+  is never mutated). Confirmed a live guest: **4 vCPU threads**, ~80 MB, real KVM-backed.
+- **Air-gapped**: zero guest NICs on the host — no egress path by construction.
+- **Teardown-under-kill**: killed the microVM mid-run (SIGKILL, the mid-detonation kill) → the guest
+  was **destroyed** (process gone) and the disposable overlay discarded, so **no guest state
+  survives teardown**.
+
+This is the build-first early-exit gate proven on the real substrate: teardown is guaranteed on a
+live hardware-isolated guest. (Arch note: this host is x86_64; detonating our aarch64 develop
+munitions needs an arm64 KVM host — an orthogonal provisioning choice. The chamber logic is
+arch-independent; this proof used the host's own x86 guest image.)
+
+Remaining for a full real detonation: deploy the chamber scripts (`setup-host.sh` + `chamber-*.sh`)
+and a rootfs carrying the vulnerable service + telemetry sensor, then fire a benign payload and
+produce the first detection-gap data point.
 
 ## The real substrate (ready to deploy)
 
