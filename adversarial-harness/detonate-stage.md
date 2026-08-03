@@ -231,7 +231,11 @@ whole stage rests on.
   (below). **auditd** is the zero-dependency fallback where eBPF/BTF is unavailable. Backbone is
   fixed per lab; the guest kernel must ship BTF (`CONFIG_DEBUG_INFO_BTF`) for the modern eBPF probe,
   else a kernel-module probe or auditd. (The first live run used the network sinkhole as the only
-  sensor — this replaces that.)
+  sensor — this replaces that.) **Wired 2026-08-03:** the staged guest kernel (6.1.102) lacks BTF and
+  BTFHub does not cover bespoke Firecracker-CI kernels, so **auditd is wired now as the interim
+  in-guest sensor** (captured a `/etc/shadow` read on a live microVM: 5 rule hits -> COVERED). The
+  Falco/eBPF (and Sysmon+Sigma) path is gated on a BTF-enabled guest kernel, tracked as
+  **Adversarix/aegis-labs#38**.
 - **Detection-rule sourcing.** **RESOLVED (2026-08-03):** the detection stack is the *swappable
   under-test variable*, not a fixed choice; the detection-gap number is coverage of a given ruleset
   against the emitted IOCs. Three sources, per study: **(1) Sigma** — the vendor-neutral rule
