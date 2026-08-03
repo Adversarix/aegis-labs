@@ -97,6 +97,37 @@ not run our aarch64 develop munitions regardless); the chamber was driven by ad-
 not yet the committed `chamber-*.sh` + jailer path. Hardening those (in-guest EDR sensor, jailer,
 the committed scripts, an arm64 host for real munitions) is the follow-on.
 
+## In-guest host sensor wired: auditd (2026-08-03)
+
+The first live run's only sensor was the network sinkhole. We have now wired a **real in-guest host
+sensor** so detonation telemetry no longer depends on the payload choosing to beacon. Per the
+`detonate-stage.md` §10 decision, the default sensor is Falco (eBPF, CO-RE), but the staged guest
+kernel (6.1.102, and every Firecracker CI kernel) lacks `CONFIG_DEBUG_INFO_BTF`, and BTFHub does not
+cover bespoke Firecracker-CI kernels — so eBPF CO-RE cannot load. We therefore wired the §10
+**fallback**, **auditd** (kernel `CONFIG_AUDITSYSCALL=y`, no eBPF/BTF required), for now.
+
+What ran, on the same GCP microVM, benign payload, fully air-gapped:
+
+- **Daemon up in-guest**: auditd started (robust `systemctl -> service -> direct` fallback,
+  verified `pgrep -x auditd`), `pid=578`, `enabled=1`, 3 rules loaded: `execve` (key `proc_exec`),
+  a `-w /etc/shadow -p r` watch (key `shadow_read`), and `connect` (key `net_connect`).
+- **Payload effect captured by the host sensor**: the benign payload read `/etc/shadow` (20 lines);
+  auditd logged it. Audit log grew to 469 lines with **10 shadow-related events**.
+- **Detection rule fired on host telemetry**: a `sensitive-file-read(/etc/shadow)` rule run over the
+  audit log **fired with 5 hits -> COVERED** — now from a real host-telemetry signal, not just the
+  network IOC. The network beacon still hit the sinkhole (HTTP 200) and the real-egress test stayed
+  blocked; the guest was destroyed on teardown.
+
+So the detonation now produces **two independent detection signals** (host syscall/file telemetry via
+auditd, plus the network IOC via the sinkhole), and the guest self-reports the sensitive-file access.
+Caveat: the `ausearch -k` key-scoped queries for `proc_exec`/`net_connect` returned 0 in this run (a
+query/format quirk — the events are present in the raw log); the primary working signal is the
+`/etc/shadow` file-watch, which is the detection we assert.
+
+The Falco/eBPF path (the §10 *default*) is tracked as a follow-up: **Adversarix/aegis-labs#38** —
+build a BTF-enabled Firecracker guest kernel (`CONFIG_DEBUG_INFO_BTF=y`) so Falco (and Sysmon+Sigma)
+can load, replacing auditd as the primary sensor.
+
 ## The real substrate (ready to deploy)
 
 `FirecrackerSubstrate` + `firecracker-host/` are code-complete: one disposable microVM per
