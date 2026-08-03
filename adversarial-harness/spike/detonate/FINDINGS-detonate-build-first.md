@@ -1,6 +1,6 @@
 # Detonate Stage — Build-First Findings
 
-**Status:** control plane complete + verified; teardown-under-kill also proven on a REAL Firecracker microVM · **Date:** 2026-08-03
+**Status:** control plane verified; the FULL build-first slice (effect + containment + detection-gap) ran live on a REAL Firecracker microVM · **Date:** 2026-08-03
 Spec: [`../../detonate-stage.md`](./../../detonate-stage.md) §9 · [`../../detonate-substrate-requirements.md`](./../../detonate-substrate-requirements.md)
 
 The red-tier detonation chamber's **control plane** is built and verified. A real detonation of a
@@ -67,6 +67,35 @@ arch-independent; this proof used the host's own x86 guest image.)
 Remaining for a full real detonation: deploy the chamber scripts (`setup-host.sh` + `chamber-*.sh`)
 and a rootfs carrying the vulnerable service + telemetry sensor, then fire a benign payload and
 produce the first detection-gap data point.
+
+## Full real detonation on the microVM (2026-08-03)
+
+Beyond the teardown gate, the **complete build-first slice ran live** on `crucible-fc-host` — a
+benign detonation in a networked, air-gapped Firecracker microVM (booted from a disposable overlay,
+guest reached over SSH via the staged key, host tap wired only to a T0 sinkhole with `ip_forward=0`
++ an iptables egress chain).
+
+- **Dry-run first**: guest reachable + sinkhole up confirmed before any payload.
+- **Effect (capability)**: the benign payload fired the objective marker in-guest (the marker read
+  back matches the signed run marker `7b218c96…`), plus a recognizable suspicious action (read
+  `/etc/shadow`, 20 lines).
+- **Contained egress**: the C2 beacon to `c2.evil.test/checkin?m=<marker>` was served by the T0
+  deception sinkhole (IOC recorded); the real-internet egress test (guest -> 8.8.8.8:53) was
+  **blocked** — nothing left the box.
+- **Detection-gap data point**: a `beacon-to-c2` rule run over the sinkhole IOC **fired** ->
+  detection **COVERED** (the first coverage measurement; swapping the ruleset is how gaps are found).
+- **Teardown guaranteed**: the microVM was destroyed and the disposable overlay discarded — no guest
+  state survives.
+
+Both build-first gates are met on the real substrate: **capability (effect observed + telemetry
+captured) AND containment (every §6 invariant held)**. This is a genuine red-tier detonation on real
+hardware virtualization, benign payload, fully contained.
+
+Honest limits of this first live run: the "sensor" was the network sinkhole (no in-guest auditd/EDR
+yet); the payload was a benign stand-in, not a real munition (and this host is x86_64, so it could
+not run our aarch64 develop munitions regardless); the chamber was driven by ad-hoc host scripts,
+not yet the committed `chamber-*.sh` + jailer path. Hardening those (in-guest EDR sensor, jailer,
+the committed scripts, an arm64 host for real munitions) is the follow-on.
 
 ## The real substrate (ready to deploy)
 
