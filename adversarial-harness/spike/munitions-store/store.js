@@ -120,14 +120,47 @@ export function openStore(dir, opts = {}) {
       return summary(m);
     },
 
-    // Arming is chamber-only and red-tier. It is refused here even WITH a human
-    // token, because no chamber exists at green tier. The state machine invariant
-    // (armed <=> in-chamber, mid-run) cannot be satisfied, so arming cannot happen.
-    arm(id, { authorization } = {}) {
+    // Arming is chamber-only and armorer-authorized (munitions-custody-policy.md
+    // §6-7). It requires BOTH a human armorer token AND an active chamber run
+    // (chamber_run_id supplied by the detonate orchestrator). With no chamber it is
+    // refused (CHAMBER_UNAVAILABLE) — the green-tier behaviour. The armed state is
+    // transient: armed <=> custody_state "armed" <=> mid-run; it must be reverted by
+    // disarm on run end/kill.
+    arm(id, { authorization, chamber_run_id } = {}) {
       requireHumanAuthz("arm", authorization);
-      const e = new Error("arming refused: the detonation chamber is red-tier and unavailable; nothing can be armed at green tier");
-      e.code = "CHAMBER_UNAVAILABLE";
-      throw e;
+      if (!chamber_run_id) {
+        const e = new Error("arming refused: no active detonation chamber (chamber_run_id required)");
+        e.code = "CHAMBER_UNAVAILABLE";
+        throw e;
+      }
+      const m = load(id);
+      if (m.custody_state === "disposed") throw new Error(`munition ${id} is disposed`);
+      m.armed = true; m.custody_state = "armed";
+      appendEvent(m, { action: "arm", actor: authorization.actor, run_id: chamber_run_id, authorization, reason: "armed for detonation" });
+      save(m);
+      return summary(m);
+    },
+
+    // Detonate: record the firing (chamber-only, must be armed). The marker ties
+    // the emitted telemetry/IOCs back to this run.
+    detonate(id, { chamber_run_id, marker, actor = "chamber" } = {}) {
+      const m = load(id);
+      if (!m.armed || m.custody_state !== "armed") throw new Error(`munition ${id} is not armed`);
+      m.custody_state = "detonated";
+      appendEvent(m, { action: "detonate", actor, run_id: chamber_run_id, reason: "fired in chamber", extra: { marker: marker ?? null } });
+      save(m);
+      return summary(m);
+    },
+
+    // Disarm: revert to inert. Called on run end, kill, or crash — the store never
+    // leaves a munition armed at rest (Principle 1). Idempotent.
+    disarm(id, { chamber_run_id, reason = "run ended" } = {}) {
+      const m = load(id);
+      if (!m.armed && m.custody_state !== "detonated" && m.custody_state !== "armed") return summary(m);
+      m.armed = false; m.custody_state = "at_rest";
+      appendEvent(m, { action: "disarm", actor: "chamber", run_id: chamber_run_id, reason });
+      save(m);
+      return summary(m);
     },
 
     // Dispose: crypto-shred the artifact ciphertext, close the ledger. Requires a

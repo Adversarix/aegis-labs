@@ -138,3 +138,18 @@ smaller/older models failed by distinct traceable modes — all under identical 
 The neutrality claim holds local and hosted by a config swap; run-to-run non-determinism is visible
 (a model flipped solved/failed across batches), which is why a converged comparison reports a range.
 See [`compare/FINDINGS-cross-model.md`](./compare/FINDINGS-cross-model.md).
+
+### Red-tier detonate stage (control plane)
+
+[`detonate/`](./detonate/) implements the detonation chamber's substrate-agnostic control plane
+(`../detonate-stage.md`, `../DESIGN.md` §6.1): the loop, the six invariants enforced in code, custody
+arm/detonate/disarm, the T0 deception sinkhole, and marker injection — with a substrate abstraction.
+`LocalHarnessSubstrate` (non-isolating) verifies the whole control plane on any machine, including
+the build-first early-exit gate: **teardown guaranteed under a mid-detonation kill**. A real munition
+is refused on it; that requires `FirecrackerSubstrate` (real microVM, Linux/KVM), which is
+code-complete (`detonate/firecracker-host/`) and ready to deploy on the provisioned GCP host. See
+[`detonate/FINDINGS-detonate-build-first.md`](./detonate/FINDINGS-detonate-build-first.md).
+
+```bash
+( cd detonate && node detonate.test.mjs )   # 16 tests incl. teardown-under-kill
+```
