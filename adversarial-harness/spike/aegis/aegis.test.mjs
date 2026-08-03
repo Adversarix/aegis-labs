@@ -2,7 +2,7 @@
 // parsing). No Goose or docker needed: run commands use --dry-run, store commands
 // are pure. Run: node aegis.test.mjs
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -47,6 +47,40 @@ ok("develop rejects an unknown target", badTarget.status === 1 && /unknown targe
 
 // --- interactive flag ---
 ok("interactive adds --interactive", aegis(["develop", "--target", "ret2win", "-s", "--dry-run"]).out.includes("--interactive"));
+
+// --- develop --binary: arbitrary target with an aarch64 ELF arch preflight ---
+// Craft minimal ELF headers (magic + EI_CLASS + EI_DATA + e_machine) — no real
+// binary needed; the check reads only the first 20 bytes.
+const elfHeader = (cls, machineLE) => {
+  const b = Buffer.alloc(20);
+  b[0] = 0x7f; b[1] = 0x45; b[2] = 0x4c; b[3] = 0x46; // \x7fELF
+  b[4] = cls;   // EI_CLASS: 2 = 64-bit
+  b[5] = 1;     // EI_DATA: little-endian
+  b.writeUInt16LE(machineLE, 18); // e_machine
+  return b;
+};
+const aarch64Bin = join(HOME, "target.aarch64");
+writeFileSync(aarch64Bin, elfHeader(2, 0xb7)); // EM_AARCH64
+const bdev = aegis(["develop", "--binary", aarch64Bin, "-t", "go", "--dry-run"]).out;
+ok("develop --binary wires AEGIS_TASK_BINARY", bdev.includes(`AEGIS_TASK_BINARY=${aarch64Bin}`));
+ok("develop --binary drops SPIKE_TARGET", !bdev.includes("SPIKE_TARGET="));
+
+const x86Bin = join(HOME, "target.x86_64");
+writeFileSync(x86Bin, elfHeader(2, 0x3e)); // EM_X86_64
+const badArch = aegis(["develop", "--binary", x86Bin, "--dry-run"]);
+ok("develop --binary rejects x86-64 with a clear reason",
+  badArch.status === 1 && /x86-64/.test(badArch.out) && /aarch64/.test(badArch.out));
+
+const bin32 = join(HOME, "target.arm32");
+writeFileSync(bin32, elfHeader(1, 0x28)); // 32-bit
+ok("develop --binary rejects a 32-bit ELF", aegis(["develop", "--binary", bin32, "--dry-run"]).status === 1);
+
+const notElf = join(HOME, "target.sh");
+writeFileSync(notElf, "#!/bin/sh\necho hi\n");
+const badElf = aegis(["develop", "--binary", notElf, "--dry-run"]);
+ok("develop --binary rejects a non-ELF", badElf.status === 1 && /not an ELF/.test(badElf.out));
+
+ok("develop --binary rejects a missing file", aegis(["develop", "--binary", join(HOME, "nope"), "--dry-run"]).status === 1);
 
 // --- store: seed a munition in the configured store, then drive the CLI ---
 const { openStore } = await import(join(DIR, "..", "munitions-store", "store.js"));
