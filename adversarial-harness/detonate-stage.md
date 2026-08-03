@@ -222,10 +222,25 @@ whole stage rests on.
 - **Deception-network fidelity default** — this spec defines tiers T0–T2 (§5); which tier
   is the default, and per-run override policy. (Resolves the standing §9 fidelity item into
   a concrete tier model.)
-- **Sensor stack composition** — synthetic telemetry vs. a real EDR agent under test; which
-  host-audit sources are standard.
-- **Detection-rule sourcing** — whose ruleset is under test in signal #1 (the point of the
-  detection-gap measurement); how rules are supplied per run.
+- **Sensor stack composition.** **RESOLVED (2026-08-03):** separate the telemetry *backbone*
+  from the detection stack *under test*, and standardize the backbone on **eBPF**. Default
+  in-guest sensor is **Falco** (CNCF, eBPF) — one component gives process/file/net/syscall
+  telemetry AND scoreable JSON alerts; alerts ship out of the guest (gRPC/syslog to a host sink,
+  so they survive teardown) and carry the run's signed marker for attribution. **Sysmon for Linux**
+  (eBPF, emits the Sysmon schema) is the alternative backbone when Sigma coverage is the goal
+  (below). **auditd** is the zero-dependency fallback where eBPF/BTF is unavailable. Backbone is
+  fixed per lab; the guest kernel must ship BTF (`CONFIG_DEBUG_INFO_BTF`) for the modern eBPF probe,
+  else a kernel-module probe or auditd. (The first live run used the network sinkhole as the only
+  sensor — this replaces that.)
+- **Detection-rule sourcing.** **RESOLVED (2026-08-03):** the detection stack is the *swappable
+  under-test variable*, not a fixed choice; the detection-gap number is coverage of a given ruleset
+  against the emitted IOCs. Three sources, per study: **(1) Sigma** — the vendor-neutral rule
+  standard (thousands of community rules); with a Sysmon-for-Linux backbone the whole corpus is
+  scoreable, the strongest and most reusable signal. **(2) Falco's own ruleset** — fastest first
+  coverage number when Falco is the backbone. **(3) a real EDR agent under test** run in the guest
+  (Elastic Defend first — open, free, own rules; MDE for Linux / CrowdStrike / SentinelOne when
+  benchmarking a licensed product). Architecture: eBPF backbone (fixed) -> ruleset/agent (swapped)
+  -> coverage vs the run's IOCs (the reported number).
 - **Twin richness** — single-host vs. multi-host twins, and how much topology is needed to
   make blast-radius / lateral-movement measurement meaningful (ties to
   `agentic-identity-pivots`).
