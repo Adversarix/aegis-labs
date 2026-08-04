@@ -153,3 +153,19 @@ code-complete (`detonate/firecracker-host/`) and ready to deploy on the provisio
 ```bash
 ( cd detonate && node detonate.test.mjs )   # 16 tests incl. teardown-under-kill
 ```
+
+### Operator research cockpit (walking skeleton)
+
+[`operator/`](./operator/) is the **cockpit** face of the harness (vs. the eval face above): point it at
+a **real third-party target** and DO the research end to end — ingest + build in the sandbox, hunt with
+libFuzzer+ASan (`--network none`), confirm the crash, promote the reproducer to real signed custody,
+characterize it honestly, and draft (STUB) coordinated disclosure. Proven on `stb_image` 2.19: a real
+uncontrolled-allocation defect (CWE-789) found, contained, taken into custody, characterized as
+non-weaponizable. Increment 1: not yet behind the mediation seam, discovery is a single fuzz tool, and
+the §6.2 disclosure workflow is a stub. See
+[`operator/FINDINGS-operator-walking-skeleton.md`](./operator/FINDINGS-operator-walking-skeleton.md).
+
+```bash
+( cd operator && docker build -t aegis-operator-stb:latest . && node operator.mjs --seconds 90 )
+( cd operator && node operator.test.mjs )   # 12 classifier tests (no docker)
+```
