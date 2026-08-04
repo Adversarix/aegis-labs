@@ -44,8 +44,11 @@ RUN gcc -fstack-protector-all -no-pie -g -O0 ramp3.c -o /work/ramp3 \
 
 # Mitigation-ramp rung 3: NX on, no win(). The objective needs an argument, so a
 # ROP chain (set x0 = magic, call unlock) is required — no plain ret2win works.
-RUN gcc -fno-stack-protector -no-pie -g -O0 ramp2.c -o /work/ramp2 \
- && file /work/ramp2
+# ramp2 hardcodes aarch64 asm (ldp/stp x0,x30). Best-effort on x86_64 — matches the
+# libFuzzer fallback pattern above: the image still builds; only this NX/ROP rung is
+# absent until ramp2's asm is ported to x86_64.
+RUN gcc -fno-stack-protector -no-pie -g -O0 ramp2.c -o /work/ramp2 && file /work/ramp2 \
+ || echo "WARN: ramp2 is aarch64-only asm; not built on x86_64 (NX/ROP rung unavailable)"
 
 # Mitigation-ramp capstone: PIE + ASLR + canary + NX all at once. Requires
 # chaining a PIE leak and a canary leak in one exploit.

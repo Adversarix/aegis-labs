@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Mediation seam: an MCP stdio server every Goose tool call must cross. Log-only or enforcing (default-deny, target-isolation, signed markers, kill-gate).",
   "scripts": {
-    "test": "node test-policy.mjs"
+    "test": "node test-policy.mjs && node test-fuzz-artifact.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
