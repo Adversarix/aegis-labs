@@ -103,7 +103,7 @@ the ladder. Both seams share the store via `AEGIS_STORE` + `AEGIS_STORE_KEY`; ev
 still crosses the enforcing gate. See [`munitions-store/README.md`](./munitions-store/README.md).
 
 ```bash
-( cd munitions-store && node store.test.mjs )         # 20 store unit tests
+( cd munitions-store && node store.test.mjs )         # 29 store unit tests
 ( cd develop-seam && node handoff-test.mjs )          # end-to-end handoff through both seams
 ```
 
@@ -181,5 +181,5 @@ minimal-reproducer description, never the reproducer bytes; guarded by `assertNo
 operator loop. See [`disclosure/README.md`](./disclosure/README.md).
 
 ```bash
-( cd disclosure && node disclosure.test.mjs )   # 19 tests: both rules, state machine, embargo, n-day, ledger
+( cd disclosure && node disclosure.test.mjs )   # 22 tests: both rules, state machine, embargo, n-day, ledger, store binding
 ```

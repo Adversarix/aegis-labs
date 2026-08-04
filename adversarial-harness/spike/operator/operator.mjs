@@ -19,6 +19,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { openDisclosure } from "../disclosure/disclosure.js";
+import { openStore } from "../munitions-store/store.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i >= 0 ? process.argv[i + 1] : d; };
@@ -39,7 +40,8 @@ const log = (stage, msg) => console.log(`[${stage.padEnd(12)}] ${msg}`);
 // requires a human disclosure owner (rule 1), which the loop demonstrably cannot self-supply.
 function disclose(cls, munition) {
   const dir = join(OUT, "disclosure"); mkdirSync(dir, { recursive: true });
-  const d = openDisclosure(dir, { key: STORE_KEY });
+  const store = openStore(STORE_DIR, { key: STORE_KEY });   // sync disclosure_status onto the munition (§8)
+  const d = openDisclosure(dir, { key: STORE_KEY, store });
   const vuln = { class: cls.class, cwe: cls.cwe,
     root_cause: cls.note || `${cls.class} in ${cls.function}`,
     minimal_reproducer_description: `reproducer held in custody as munition ${munition.id} (embargoed, not attached); ${cls.signal}` };

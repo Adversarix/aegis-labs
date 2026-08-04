@@ -55,6 +55,11 @@ export function openDisclosure(dir, opts = {}) {
   const key = createHash("sha256").update(String(opts.key || process.env.AEGIS_DISCLOSURE_KEY || "disclosure-dev-key")).digest();
   const caseDir = join(dir, "cases");
   mkdirSync(caseDir, { recursive: true });
+  // Optional binding to the munitions store: keep its disclosure_status (which gates
+  // arm/export, policy §8) in sync with the case state. Best-effort — a store hiccup
+  // never breaks the disclosure case itself.
+  const STORE = opts.store || null;
+  const syncStore = (c) => { if (STORE) { try { STORE.set_disclosure_status(c.munition_id, c.state, { reason: `disclosure case ${c.id} -> ${c.state}` }); } catch { /* non-fatal */ } } };
   const path = (id) => join(caseDir, `${id}.json`);
   const load = (id) => { if (!existsSync(path(id))) throw new Error(`no disclosure case ${id}`); return JSON.parse(readFileSync(path(id), "utf8")); };
   const save = (c) => writeFileSync(path(c.id), JSON.stringify(c, null, 2));
@@ -73,6 +78,7 @@ export function openDisclosure(dir, opts = {}) {
     c.state = toState;
     appendEvent(c, { action: toState, actor: authorization?.actor || actor, authorization, note, extra });
     save(c);
+    syncStore(c);
     return summary(c);
   }
 
@@ -94,6 +100,7 @@ export function openDisclosure(dir, opts = {}) {
       appendEvent(c, { action: "open", note: public_reference ? `n-day: public reference ${public_reference}` : "case opened, embargoed" });
       if (public_reference) appendEvent(c, { action: "disclosed", note: "already public (n-day); no new embargo" });
       save(c);
+      syncStore(c);
       return summary(c);
     },
 
@@ -115,6 +122,7 @@ export function openDisclosure(dir, opts = {}) {
       c.state = state;
       appendEvent(c, { action: state, actor: "harness", note });
       save(c);
+      syncStore(c);
       return summary(c);
     },
 

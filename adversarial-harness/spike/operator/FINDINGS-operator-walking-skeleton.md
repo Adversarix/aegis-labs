@@ -98,8 +98,13 @@ clock, the n-day fast path, and ledger integrity.
 - **DoS-class finding.** A memory-corruption target would exercise the develop/weaponize stage more
   fully; the loop supports it (`classify()` grades an OOB as weaponizable), this target/version just did
   not yield one quickly.
-- **Store-perms binding to `disclosure_status`** (policy §8: embargoed gates arm/export) is the disclosure
-  workflow's next tie-in.
+
+**Store-perms binding (policy §8) — done.** The munitions store now gates the weapon on
+`disclosure_status`: `export` is refused for any third-party find (`EXPORT_FORBIDDEN`, keyed on
+immutable ownership — the weapon is never shared), and `arm` on a third-party munition is in-box only
+(`DISCLOSURE_INBOX_ONLY`) and refused once the case is `withdrawn` (`DISCLOSURE_CLOSED`). The disclosure
+workflow calls `store.set_disclosure_status` on each transition, so the gate tracks the case. Covered by
+the store tests (29) and a disclosure->store binding test.
 
 ## What it proves
 
