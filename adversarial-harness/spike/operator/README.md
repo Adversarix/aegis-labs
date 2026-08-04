@@ -24,7 +24,9 @@ and land in `MEDIATION_LOG`. An agent (Goose) could drive the same seam.
 - **characterize** — classify the crash (class, CWE, weaponizability), honestly (`triage.js`).
 - **custody** — promote the reproducer to a real munition (encrypted, signed ledger; `ownership=third-party`,
   `disclosure_status=embargoed`).
-- **disclose** — emit a coordinated-disclosure DRAFT (a **STUB**: the §6.2 workflow is unbuilt).
+- **disclose** — open a real coordinated-disclosure case ([`../disclosure/`](./../disclosure), §6.2):
+  embargoed, vendor package + advisory assembled (no weapon), and the autonomous loop stops — reporting
+  needs a human disclosure owner.
 
 ## Run
 
@@ -39,6 +41,7 @@ Options: `--seconds <n>` hunt budget, `--out <dir>` run artifacts + store, `--st
 
 ## Honest scope (remaining)
 
-Discovery is a single fuzz tool (no triage/dedup/minimization or static/RE). Disclosure is a stub. The
-stb finding is a DoS-class uncontrolled-allocation (CWE-789), characterized honestly as non-weaponizable.
+Discovery is a single fuzz tool (no triage/dedup/minimization or static/RE). The stb finding is a
+DoS-class uncontrolled-allocation (CWE-789), characterized honestly as non-weaponizable. Binding
+`disclosure_status` to store arm/export permissions (policy §8) is the disclosure workflow's next tie-in.
 See [`FINDINGS-operator-walking-skeleton.md`](./FINDINGS-operator-walking-skeleton.md).

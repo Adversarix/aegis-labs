@@ -159,13 +159,27 @@ code-complete (`detonate/firecracker-host/`) and ready to deploy on the provisio
 [`operator/`](./operator/) is the **cockpit** face of the harness (vs. the eval face above): point it at
 a **real third-party target** and DO the research end to end — ingest + build in the sandbox, hunt with
 libFuzzer+ASan (`--network none`), confirm the crash, promote the reproducer to real signed custody,
-characterize it honestly, and draft (STUB) coordinated disclosure. Proven on `stb_image` 2.19: a real
-uncontrolled-allocation defect (CWE-789) found, contained, taken into custody, characterized as
-non-weaponizable. Increment 1: not yet behind the mediation seam, discovery is a single fuzz tool, and
-the §6.2 disclosure workflow is a stub. See
+characterize it honestly, and open a real coordinated-disclosure case. Every op is **seam-mediated**
+(`operator.mjs` is an MCP client driving `operator/seam.js`, so hunt/reproduce/triage/promote cross the
+enforcing gate with signed markers). Proven on `stb_image` 2.19: a real uncontrolled-allocation defect
+(CWE-789) found, contained, taken into custody, characterized as non-weaponizable, and an embargoed
+disclosure case opened that the autonomous loop cannot self-report. See
 [`operator/FINDINGS-operator-walking-skeleton.md`](./operator/FINDINGS-operator-walking-skeleton.md).
 
 ```bash
-( cd operator && docker build -t aegis-operator-stb:latest . && node operator.mjs --seconds 90 )
-( cd operator && node operator.test.mjs )   # 12 classifier tests (no docker)
+( cd operator && npm install && docker build -t aegis-operator-stb:latest . && node operator.mjs --seconds 90 )
+( cd operator && node operator.test.mjs )   # 20 tests: classifier + seam mediation (no docker)
+```
+
+### Coordinated disclosure workflow (§6.2)
+
+[`disclosure/`](./disclosure/) implements the CVD policy for third-party finds: the `disclosure_status`
+state machine, a 90-day embargo clock, and a signed case ledger. Two rules enforced in code — **the
+harness finds, a human discloses** (every advance out of `embargoed` needs a disclosure-owner token; the
+loop cannot self-report) and **disclose the vuln, never the weapon** (a case carries metadata + a
+minimal-reproducer description, never the reproducer bytes; guarded by `assertNoWeapon`). Wired into the
+operator loop. See [`disclosure/README.md`](./disclosure/README.md).
+
+```bash
+( cd disclosure && node disclosure.test.mjs )   # 19 tests: both rules, state machine, embargo, n-day, ledger
 ```
