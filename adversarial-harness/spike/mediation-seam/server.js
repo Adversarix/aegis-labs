@@ -35,6 +35,7 @@ import { execSync, execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { evaluate, TOOLS, DEFAULT_SCOPE } from "./policy.js";
 import { signMarker } from "./marker.js";
+import { fuzzArgv, extractReproHex } from "./artifact.js";
 import { openStore } from "../munitions-store/store.js";
 
 const MODE = (process.env.SEAM_MODE || "enforcing").toLowerCase();
@@ -179,16 +180,29 @@ if (ALLOW_EXPOSE.includes("fuzz")) {
     "fuzz",
     { description:
         "Run a short libFuzzer campaign against the target inside the sandbox " +
-        "(--network none) and report whether a crash was found, with the ASan report.",
+        "(--network none) and report whether a crash was found, with the ASan report. " +
+        "On a crash it also returns reproducer_input_hex — the exact crashing bytes — " +
+        "which you can replay with run_poc (input_hex=...) and promote with " +
+        "promote_finding (reproducer_input_hex=...).",
       inputSchema: { max_seconds: z.number().int().min(1).max(60).optional().describe("Campaign length, default 20s") } },
     async ({ max_seconds }) => {
       const secs = max_seconds ?? 20;
       const v = mediate("fuzz", { max_seconds: secs });
       if (v.decision !== "allow") return denyResult(v);
-      const r = sandboxRun(["/work/vuln_fuzz", `-max_total_time=${secs}`, "-artifact_prefix=/tmp/"], Buffer.alloc(0), v.marker?.hmac);
+      // The sandbox is --rm, so a crash artifact libFuzzer writes to /tmp/crash-*
+      // dies with the container. fuzzArgv wraps the run so the artifact bytes are
+      // emitted on stdout (base64, after a marker line) — the only way the crashing
+      // input escapes the box for run_poc / promote_finding (see artifact.js).
+      const r = sandboxRun(fuzzArgv(secs), Buffer.alloc(0), v.marker?.hmac);
       const crashed = asanCrashed(r), summary = asanSummary(r);
+      const reproHex = extractReproHex(r.out);
       const text = `crashed=${crashed}\nexit=${r.code}\n` +
-        (crashed ? `--- ASan ---\n${summary}\n` : `--- no crash found in ${secs}s ---\n`);
+        (crashed ? `--- ASan ---\n${summary}\n` : `--- no crash found in ${secs}s ---\n`) +
+        (reproHex
+          ? `reproducer_input_hex=${reproHex}\n` +
+            `next: run_poc(input_hex="${reproHex}") to reproduce, then ` +
+            `promote_finding(reproducer_input_hex="${reproHex}", recipe, crash_report).\n`
+          : (crashed ? `(crash artifact not recovered from the sandbox)\n` : ""));
       return { content: [{ type: "text", text }] };
     }
   );
