@@ -1,6 +1,6 @@
 # Operator Research Loop — Walking-Skeleton Findings
 
-**Status:** the operator cockpit runs end to end on a REAL third-party target, fully contained · **Date:** 2026-08-03
+**Status:** the operator cockpit runs end to end on a REAL third-party target, fully contained AND seam-mediated (increment 2) · **Date:** 2026-08-03
 Spec of: [`../../DESIGN.md`](./../../DESIGN.md) §1 (autonomous adversarial research), §2 (third-party in scope), §5.1 (discovery)
 
 ## Why this exists
@@ -54,12 +54,27 @@ with a dimension guard, deeper decode paths. A clean heap-buffer-overflow was no
 hunt budget on this hardened-ish version; the loop is finding-agnostic and will classify whatever it
 finds (`classify()` handles OOM / buffer-overflow / reachable-crash).
 
-## Honest scope (this is increment 1)
+## Increment 2 (done): seam-mediated
 
-- **Not yet behind the MCP mediation seam.** The hunt runs `--network none` and custody uses the real
-  store, but the loop is orchestrated directly in `operator.mjs`, not through the enforcing seam. Wiring
-  the fuzz/triage tools behind the seam (so every op crosses the logged gate, like develop/discovery) is
-  **increment 2**.
+The loop now runs through `operator/seam.js`, an MCP seam mirroring the develop/discovery seams:
+`hunt` / `reproduce` / `triage` / `promote_finding` each cross the enforcing `mediate()` gate
+(default-deny, tier, target-isolation, signed markers, kill-gate; reusing `policy.js` + `marker.js`)
+and land in `MEDIATION_LOG`. `operator.mjs` is now an MCP **client** driving the seam (like the
+ExploitGym adapter drives the develop-seam), so an agent (Goose) could drive the same seam identically.
+A live run logged all four ops as allowed with signed markers:
+
+```
+seq 1: hunt             allow  marker=yes  actor=operator
+seq 2: reproduce        allow  marker=yes  actor=operator
+seq 3: triage           allow  marker=yes  actor=operator
+seq 4: promote_finding  allow  marker=yes  actor=operator
+```
+
+The mediation unit tests confirm the run scope default-denies `run_shell`, out-of-scope develop tools,
+and unknown tools, and that the kill-gate overrides an otherwise-allowed op.
+
+## Honest scope (remaining)
+
 - **Discovery is a single fuzz tool.** No crash triage/dedup/minimization, no static analysis / RE
   (`DESIGN.md` §5.1). One reproducer, one munition.
 - **Disclosure is a stub.** The §6.2 CVD workflow (embargo clock, coordinator path, human-gated
@@ -77,7 +92,8 @@ and the **disclosure workflow** are the next increments.
 ## Reproduce
 
 ```bash
+( cd operator && npm install )                                   # MCP SDK for the seam + client
 ( cd operator && docker build -t aegis-operator-stb:latest . )   # ingest + build the real target
-node operator/operator.mjs --seconds 90                          # run the loop
-( cd operator && node operator.test.mjs )                        # pure-classifier unit tests (no docker)
+( cd operator && node operator.mjs --seconds 90 )                # run the seam-mediated loop
+( cd operator && node operator.test.mjs )                        # 20 tests: classifier + seam mediation (no docker)
 ```
