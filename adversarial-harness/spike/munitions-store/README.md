@@ -52,7 +52,7 @@ tool) and the custody ledger (what happened to the munition).
 ## Tests
 
 ```bash
-node store.test.mjs                 # 20 unit tests: lifecycle, encryption, authz, tamper, shred
+node store.test.mjs                 # 29 unit tests: lifecycle, encryption, authz, tamper, shred, disclosure gate
 node ../develop-seam/handoff-test.mjs   # end-to-end through both seams against a shared store
 ```
 
@@ -65,9 +65,25 @@ develop:   record_progress  -> level=exploit, reliability=1.0       (ledger: cre
 verify: ok
 ```
 
+## Disclosure overlay (disclosure-policy.md §8)
+
+`export` and `set_disclosure_status` are implemented and bound to the coordinated-disclosure
+workflow (`../disclosure/`). The `disclosure_status` field IS the CVD state machine, and it gates
+the weapon:
+
+- **`export`** is human-authorized AND refused outright for any **third-party** find
+  (`EXPORT_FORBIDDEN`) — disclosure releases the vulnerability, never the weapon (§2/§7/§8). Keyed
+  on the immutable `ownership`, so no status change can unlock it. Owned/benign munitions export with
+  authorization.
+- **`arm`** on a third-party munition is in-box only: refused against a target other than the
+  discovered one (`DISCLOSURE_INBOX_ONLY`) and refused once the case is `withdrawn`
+  (`DISCLOSURE_CLOSED`).
+
+The disclosure workflow calls `set_disclosure_status` on each transition, so the store's gate tracks
+the case state.
+
 ## Deferred (red tier / future)
 
-`arm` / `detonate` / `export` and the full disclosure interplay attach to the detonation chamber
-and the coordinated-disclosure workflow (`disclosure-policy.md`), neither of which exists yet. The
-store already models their states and refuses them safely; wiring the chamber and a human
-custodian CLI is the next step when red tier lands.
+`arm` / `detonate` attach to the detonation chamber, which does not exist yet; the store models their
+states and refuses them safely (`CHAMBER_UNAVAILABLE`). A human custodian CLI for arm/export is the
+next step when red tier lands.

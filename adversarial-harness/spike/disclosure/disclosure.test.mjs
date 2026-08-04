@@ -1,6 +1,7 @@
 // Tests for the coordinated-disclosure workflow (disclosure-policy.md, DESIGN §6.2).
 // Pure (filesystem in a temp dir); no docker. Run: node disclosure.test.mjs
 import { openDisclosure } from "./disclosure.js";
+import { openStore } from "../munitions-store/store.js";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -62,6 +63,19 @@ ok("n-day opens straight to disclosed", nday.state === "disclosed" && nday.publi
 // --- ledger integrity + never-weapon re-check ---
 const v = d.verify(c.id);
 ok("case ledger verifies", v.ok === true && v.events >= 5);
+
+// --- store binding (§8): case transitions sync the munition's disclosure_status ---
+const store = openStore(mkdtempSync(join(tmpdir(), "disc-store-")), { key: "k" });
+const mun = store.create({ artifact: { reproducer_input_hex: "ab", recipe: "r", crash_report: "c" },
+  ownership: "third-party", target_match: "t@1", disclosure_status: "embargoed" });
+const db = openDisclosure(mkdtempSync(join(tmpdir(), "disc-b-")), { key: "k", store });
+const cb = db.open(mun, { vuln, target });
+db.report(cb.id, { authorization: OWNER, contact: "sec@t" });
+ok("report syncs store disclosure_status to 'reported'", store.get(mun.id).disclosure_status === "reported");
+db.withdraw(cb.id, { authorization: OWNER });
+ok("withdraw syncs store to 'withdrawn'", store.get(mun.id).disclosure_status === "withdrawn");
+ok("store now refuses arming the withdrawn munition",
+  threw(() => store.arm(mun.id, { authorization: { role: "armorer", actor: "x" }, chamber_run_id: "C", target: "t@1" }), "DISCLOSURE_CLOSED"));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);

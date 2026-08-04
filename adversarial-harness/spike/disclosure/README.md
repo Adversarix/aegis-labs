@@ -46,5 +46,5 @@ d.verify(c.id);
 ## Test
 
 ```bash
-node disclosure.test.mjs   # 19 tests: both rules, state machine, embargo clock, n-day, ledger
+node disclosure.test.mjs   # 22 tests: both rules, state machine, embargo clock, n-day, ledger, store binding
 ```
