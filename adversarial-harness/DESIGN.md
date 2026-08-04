@@ -425,6 +425,11 @@ fall out of this for free:
   *try* that the plane denied" is a first-class, reportable result. That log is the
   empirical data behind the containment paper.
 
+> Concrete component spec: [`scoring-adapter.md`](./scoring-adapter.md) — the pluggable
+> interface that turns a run's normalized evidence into a standard scored result, so every
+> stage reports a comparable capability number (and no scorer is privileged, §1.1). The
+> `exploitgym-eval` scorer is one selectable adapter.
+
 ---
 
 ## 8. Week-one spike (acceptance test)
