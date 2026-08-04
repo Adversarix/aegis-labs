@@ -1,6 +1,6 @@
 # Operator Research Loop — Walking-Skeleton Findings
 
-**Status:** the operator cockpit runs end to end on a REAL third-party target, fully contained AND seam-mediated (increment 2) · **Date:** 2026-08-03
+**Status:** the operator cockpit runs end to end on a REAL third-party target — contained, seam-mediated (increment 2), with real coordinated disclosure (increment 3) · **Date:** 2026-08-03
 Spec of: [`../../DESIGN.md`](./../../DESIGN.md) §1 (autonomous adversarial research), §2 (third-party in scope), §5.1 (discovery)
 
 ## Why this exists
@@ -73,14 +73,33 @@ seq 4: promote_finding  allow  marker=yes  actor=operator
 The mediation unit tests confirm the run scope default-denies `run_shell`, out-of-scope develop tools,
 and unknown tools, and that the kill-gate overrides an otherwise-allowed op.
 
+## Increment 3 (done): real coordinated disclosure
+
+The disclosure stub is replaced by the real §6.2 workflow ([`../disclosure/`](./../disclosure)). The
+loop opens an **embargoed** case, assembles the vendor package + advisory (metadata + a
+minimal-reproducer *description*, never the reproducer bytes), and then **stops** — reporting requires a
+human disclosure owner. Live run:
+
+```
+[disclose] case ba2c10b6-… opened EMBARGOED; vendor package + advisory prepared (no weapon, rule 2)
+[disclose] self-report refused=true -> awaiting a human disclosure owner (rule 1); ledger {ok:true,...}
+```
+
+Both §6.2 rules are enforced in code and demonstrated: **the harness finds, a human discloses** (the
+autonomous loop cannot self-report — `OWNER_REQUIRED`), and **disclose the vuln, never the weapon** (the
+generated package/advisory carry the CWE and root cause but no reproducer bytes; `assertNoWeapon` +
+`verify` guard it). 19 disclosure unit tests cover both rules, the state machine, the 90-day embargo
+clock, the n-day fast path, and ledger integrity.
+
 ## Honest scope (remaining)
 
 - **Discovery is a single fuzz tool.** No crash triage/dedup/minimization, no static analysis / RE
   (`DESIGN.md` §5.1). One reproducer, one munition.
-- **Disclosure is a stub.** The §6.2 CVD workflow (embargo clock, coordinator path, human-gated
-  publication, never-publish-the-weapon) does not exist; the draft advisory names that gap.
 - **DoS-class finding.** A memory-corruption target would exercise the develop/weaponize stage more
-  fully; the loop supports it, this target/version just did not yield one quickly.
+  fully; the loop supports it (`classify()` grades an OOB as weaponizable), this target/version just did
+  not yield one quickly.
+- **Store-perms binding to `disclosure_status`** (policy §8: embargoed gates arm/export) is the disclosure
+  workflow's next tie-in.
 
 ## What it proves
 

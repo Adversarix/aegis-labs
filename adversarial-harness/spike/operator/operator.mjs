@@ -18,6 +18,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { openDisclosure } from "../disclosure/disclosure.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i >= 0 ? process.argv[i + 1] : d; };
@@ -32,23 +33,25 @@ const TARGET = { name: "stb_image", version: "2.19", source: "github.com/nothing
 
 const log = (stage, msg) => console.log(`[${stage.padEnd(12)}] ${msg}`);
 
-// DISCLOSE: coordinated-disclosure DRAFT. STUB — the §6.2 CVD workflow (embargo clock,
-// coordinator path, human-gated publication) is unbuilt; this names the gap (increment 3).
-function discloseStub(cls, munition) {
+// DISCLOSE: the real coordinated-disclosure workflow (increment 3; disclosure-policy.md,
+// §6.2). The autonomous loop opens an EMBARGOED case and assembles the vendor package
+// (metadata + minimal-reproducer description, NEVER the weapon), then STOPS: reporting
+// requires a human disclosure owner (rule 1), which the loop demonstrably cannot self-supply.
+function disclose(cls, munition) {
   const dir = join(OUT, "disclosure"); mkdirSync(dir, { recursive: true });
-  const advisory = `# DRAFT advisory (STUB) — ${TARGET.name} ${TARGET.version}
-
-**Status:** DRAFT / EMBARGOED. Stub: the coordinated-disclosure workflow
-(disclosure-policy.md, DESIGN.md §6.2) is not implemented. Do NOT send.
-
-- **Target:** ${TARGET.name} ${TARGET.version} (${TARGET.source}), ${TARGET.license}
-- **Class:** ${cls.class} (${cls.cwe}) in \`${cls.function}\`
-- **Severity:** ${cls.severity}
-- **Found by:** libFuzzer + AddressSanitizer, contained (--network none), seam-mediated
-- **Reproducer:** custody munition ${munition.id} (embargoed in the store, not published)
-`;
-  writeFileSync(join(dir, "advisory-draft.md"), advisory);
-  log("disclose", `wrote DRAFT advisory (STUB) -> ${join(dir, "advisory-draft.md")}`);
+  const d = openDisclosure(dir, { key: STORE_KEY });
+  const vuln = { class: cls.class, cwe: cls.cwe,
+    root_cause: cls.note || `${cls.class} in ${cls.function}`,
+    minimal_reproducer_description: `reproducer held in custody as munition ${munition.id} (embargoed, not attached); ${cls.signal}` };
+  const c = d.open({ id: munition.id, ownership: "third-party" }, { vuln, target: TARGET });
+  writeFileSync(join(dir, "vendor-package.json"), JSON.stringify(d.packageForVendor(c.id), null, 2));
+  writeFileSync(join(dir, "advisory.md"), d.advisory(c.id));
+  // Rule 1: the autonomous loop cannot disclose on its own — prove the refusal.
+  let selfReportRefused = false;
+  try { d.report(c.id, {}); } catch (e) { selfReportRefused = e.code === "OWNER_REQUIRED"; }
+  log("disclose", `case ${c.id} opened EMBARGOED; vendor package + advisory prepared (no weapon, rule 2)`);
+  log("disclose", `self-report refused=${selfReportRefused} -> awaiting a human disclosure owner (rule 1); ledger ${JSON.stringify(d.verify(c.id))}`);
+  return c;
 }
 
 async function main() {
@@ -86,9 +89,9 @@ async function main() {
     const m = await call("promote_finding", { reproducer_hex: h.reproducer_hex, report: r.report, classification: cls, target: TARGET });
     log("custody", `munition ${m.id} (third-party, embargoed); ledger verify ok=${m.verify?.ok} events=${m.verify?.events}`);
 
-    discloseStub(cls, m);
+    disclose(cls, m);
 
-    console.log(`\n=== loop complete: real bug in real code, seam-mediated, in custody, disclosure drafted ===`);
+    console.log(`\n=== loop complete: real bug in real code, seam-mediated, in custody, disclosure case embargoed ===`);
     console.log(`munition ${m.id} | class ${cls.class} (${cls.cwe}) | custody ${m.verify?.ok ? "VERIFIED" : "BROKEN"}`);
     console.log(`mediation log: ${MEDIATION_LOG}\n`);
     await client.close();
