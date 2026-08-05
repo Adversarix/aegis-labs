@@ -30,9 +30,11 @@ export function runChecks(cfg) {
   const images = docker ? tryCmd("docker", ["images", "--format", "{{.Repository}}:{{.Tag}}"]) || "" : "";
   add(`image ${cfg.fuzz_image}`, images.includes(cfg.fuzz_image), cfg.fuzz_image);
   add(`image ${cfg.develop_image}`, images.includes(cfg.develop_image), cfg.develop_image);
+  add(`image ${cfg.operator_image}`, images.includes(cfg.operator_image), cfg.operator_image);
 
   add("mediation seam", existsSync(PATHS.mediationSeam), PATHS.mediationSeam);
   add("develop seam", existsSync(PATHS.developSeam), PATHS.developSeam);
+  add("operator seam", existsSync(PATHS.operatorSeam), PATHS.operatorSeam);
   add("munitions store", existsSync(cfg.store_dir), cfg.store_dir);
   add("keys initialized", !!(cfg.marker_key && cfg.store_key), cfg.marker_key ? "present" : "run `aegis init`");
 

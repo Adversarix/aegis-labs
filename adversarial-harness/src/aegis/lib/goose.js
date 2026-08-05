@@ -21,6 +21,12 @@ function seamExtension(kind, cfg, { target, binary } = {}) {
     const env = { ...shared, AEGIS_FUZZ_IMAGE: cfg.fuzz_image, MEDIATION_LOG: join(cfg.log_dir, "discover.log") };
     return `${extPrefix(env)} node ${PATHS.mediationSeam}`;
   }
+  if (kind === "operator") {
+    // Cockpit face: hunt/reproduce/triage/promote_finding against a baked real
+    // target (OPERATOR_IMAGE). No target selector — the target ships in the image.
+    const env = { ...shared, OPERATOR_IMAGE: cfg.operator_image, MEDIATION_LOG: join(cfg.log_dir, "operator.log") };
+    return `${extPrefix(env)} node ${PATHS.operatorSeam}`;
+  }
   const env = {
     ...shared, AEGIS_DEVELOP_IMAGE: cfg.develop_image, SESSION_SERVER: PATHS.sessionServer,
     MEDIATION_LOG: join(cfg.log_dir, "develop.log"),
@@ -65,6 +71,11 @@ export function buildRun(kind, cfg, opts = {}) {
   const binary = opts.binary ? resolve(opts.binary) : null;
   if (kind === "develop" && !binary && opts.target && !TARGETS.includes(opts.target)) {
     throw new Error(`unknown target '${opts.target}' (choose one of: ${TARGETS.join(", ")})`);
+  }
+  // The operator cockpit is meant to run the research loop autonomously, so default
+  // to the shipped agent instructions when the researcher supplies neither -t nor -i.
+  if (kind === "operator" && !opts.task && !opts.instructions) {
+    opts = { ...opts, instructions: PATHS.operatorInstructions };
   }
   if (binary) assertAarch64Elf(binary);   // fail fast before launching Goose/docker
   const args = ["run", "--no-profile"];
