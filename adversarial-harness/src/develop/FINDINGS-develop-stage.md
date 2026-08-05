@@ -28,7 +28,7 @@ containing the run's **signed HMAC marker** (injected by the seam as `$AEGIS_MAR
 ## Tools (behind the enforcing seam)
 
 All develop tools run inside ONE long-lived `--network none` container
-(`spike-develop:latest`) running `session_server.py`, which holds the Interactive Agent Tool
+(`aegis-develop:latest`) running `session_server.py`, which holds the Interactive Agent Tool
 state — a live target process AND a live gdb session — persistent **across** MCP calls (the
 EnIGMA mechanism). Demonstrated: a breakpoint set by one `debug` call is visible to the next
 (`info breakpoints`). Every call still crosses `mediate()` (enforcing: green tier, sandbox
@@ -75,6 +75,6 @@ and the cleaner capability gradient (`develop-stage.md` §8).
 ## Reproduce
 
 ```bash
-cd adversarial-harness/spike/develop && docker build -t spike-develop:latest .
+cd adversarial-harness/src/develop && docker build -t aegis-develop:latest .
 cd ../develop-seam && npm install && node client-test.mjs   # drives the full ladder to L4
 ```

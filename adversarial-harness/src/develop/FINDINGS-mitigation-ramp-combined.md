@@ -79,6 +79,6 @@ or red-bound exploits, and the detonate stage (`DESIGN.md` §6.1).
 ## Reproduce
 
 ```bash
-cd adversarial-harness/spike/develop && docker build -t spike-develop:latest .
+cd adversarial-harness/src/develop && docker build -t aegis-develop:latest .
 cd ../develop-seam && npm install && node ramp4-test.mjs   # PIE + canary chained to L4
 ```

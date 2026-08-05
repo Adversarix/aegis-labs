@@ -6,10 +6,10 @@ lifecycle — **discover → develop → detonate → observe** — where every 
 a code-enforced containment plane. It is a **neutral instrument**: model-agnostic,
 target-agnostic, and independent of any single use case or prior research (`DESIGN.md` §1.1).
 
-This directory is **architecture and method**, not an engine. It is design documentation
-and governance policy; it contains no offensive tradecraft, no working exploits, and no
-munitions. The project is in the **design phase** — the next step is a runnable week-one
-spike, not a shipped tool.
+The top level of this directory is **architecture and method**: design documentation and
+governance policy, with no offensive tradecraft, no working exploits, and no munitions
+checked in. The design has since been **built** — the runnable harness lives in
+[`src/`](./src/README.md), grown out of the week-one spike ([`spike/`](./spike/README.md)).
 
 ---
 
@@ -73,6 +73,8 @@ Start with `DESIGN.md`; the rest are components and policies it links.
 | [`munitions-custody-policy.md`](./munitions-custody-policy.md) | Chain-of-custody governance for the munitions store. |
 | [`week-one-spike.md`](./week-one-spike.md) | The build runbook — five days, real commands, hard acceptance gates. |
 | [`FINDINGS-week-one-spike.md`](./FINDINGS-week-one-spike.md) | Results template for the spike. |
+| [`src/`](./src/README.md) | **The implementation** — the `aegis` CLI, the enforcing seam, the develop/operator stages, the munitions store, detonate, and disclosure. |
+| [`spike/`](./spike/README.md) | The genuine week-one Day-1..5 spike scaffolding, kept as a dated record. |
 
 ---
 
@@ -104,11 +106,16 @@ not merely restricted** (`DESIGN.md` §2, §6).
 ## Status & where to start
 
 - **Design phase complete** — the full lifecycle and both governance gates are specified.
-- **Not yet implemented** — no code in this directory; the harness is a fork-plus-tools
-  design, not a running system.
-- **To build:** follow [`week-one-spike.md`](./week-one-spike.md), which resolves the fork
-  choice and the tool-call-format risk by building, and records results in
-  [`FINDINGS-week-one-spike.md`](./FINDINGS-week-one-spike.md).
+- **Implemented and running** — the harness lives in [`src/`](./src/README.md): the `aegis`
+  CLI over Goose, the enforcing mediation seam, the develop and operator stages, the munitions
+  store, the detonate control plane, and the coordinated-disclosure workflow, with passing test
+  suites across the components. The green tier runs end to end (the operator cockpit found,
+  contained, and characterized a real third-party defect); the red-tier detonate substrate
+  (Firecracker) is code-complete and awaiting deploy.
+- **How it started:** [`week-one-spike.md`](./week-one-spike.md) resolved the fork choice and
+  the tool-call-format risk by building; results in
+  [`FINDINGS-week-one-spike.md`](./FINDINGS-week-one-spike.md). The scaffolding from that week
+  remains under [`spike/`](./spike/README.md).
 
 Open design questions are tracked in `DESIGN.md` §9 and in each stage/policy doc's own
 open-items section (notably the cross-cutting **volume/severity gating** the two policies
