@@ -54,6 +54,12 @@ export const TOOLS = {
   ingest_munition:  { tier: "green", isolated: true },
   record_progress:  { tier: "green", isolated: true },
   list_munitions:   { tier: "green", isolated: true },
+  // Operator research-cockpit tools (operator/seam.js). hunt/reproduce execute the
+  // target only inside the --network none sandbox (isolated); triage acts on a crash
+  // report with no target at all (isolated like the custody bookkeeping tools).
+  hunt:      { tier: "green", isolated: true },
+  reproduce: { tier: "green", isolated: true },
+  triage:    { tier: "green", isolated: true },
 };
 
 // The default enforcing run scope: green tier, discovery tools only, sandbox

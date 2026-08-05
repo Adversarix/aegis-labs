@@ -67,8 +67,31 @@ doc.ledger[0].reason = "tampered";               // edit an event body, leave ha
 writeFileSync(f2, JSON.stringify(doc, null, 2));
 ok("verify detects a tampered ledger event", store.verify(m2.id).ok === false);
 
+// --- disclosure overlay gates arm/export (disclosure-policy.md §8) ---
+const tp = store.create({ artifact: { reproducer_input_hex: "ab", recipe: "r", crash_report: "c" },
+  ownership: "third-party", target_match: "stb_image@2.19", disclosure_status: "embargoed" });
+const owned = store.create({ artifact: { reproducer_input_hex: "cd", recipe: "r", crash_report: "c" }, ownership: "owned" });
+const ARMORER = { role: "armorer", actor: "bob" };
+const HUMAN = { role: "custodian", actor: "alice" };
+
+ok("export refused for a third-party find (EXPORT_FORBIDDEN)", threw(() => store.export(tp.id, { authorization: HUMAN }), "EXPORT_FORBIDDEN"));
+ok("export requires a human authorization", threw(() => store.export(owned.id, {}), "AUTHZ_REQUIRED"));
+ok("export allowed for an owned munition with authz", store.export(owned.id, { authorization: HUMAN }).exported === true);
+
+ok("arm refused against a different target (DISCLOSURE_INBOX_ONLY)",
+  threw(() => store.arm(tp.id, { authorization: ARMORER, chamber_run_id: "C-1", target: "other@1.0" }), "DISCLOSURE_INBOX_ONLY"));
+ok("arm allowed in-box against the discovered target", store.arm(tp.id, { authorization: ARMORER, chamber_run_id: "C-1", target: "stb_image@2.19" }).armed === true);
+store.disarm(tp.id, { chamber_run_id: "C-1" });
+
+store.set_disclosure_status(tp.id, "withdrawn");
+ok("arm refused once the case is withdrawn (DISCLOSURE_CLOSED)",
+  threw(() => store.arm(tp.id, { authorization: ARMORER, chamber_run_id: "C-2", target: "stb_image@2.19" }), "DISCLOSURE_CLOSED"));
+ok("export still refused after withdrawn (weapon never leaves)", threw(() => store.export(tp.id, { authorization: HUMAN }), "EXPORT_FORBIDDEN"));
+ok("set_disclosure_status rejects an unknown status", threw(() => store.set_disclosure_status(tp.id, "bogus")));
+ok("verify holds across disclosure ops", store.verify(tp.id).ok === true);
+
 // --- list ---
-ok("list returns both munitions", store.list().length === 2);
+ok("list returns all four munitions", store.list().length === 4);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);

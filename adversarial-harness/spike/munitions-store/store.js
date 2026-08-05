@@ -46,6 +46,36 @@ function decrypt(key, enc) {
 const HARNESS_ACTIONS = new Set(["create", "access", "update"]);   // harness may self-authorize
 const HUMAN_ACTIONS = new Set(["arm", "detonate", "export", "dispose"]); // require a human token
 
+// disclosure-policy.md §8 — the disclosure overlay gates the weapon on third-party
+// finds. The overlay applies whenever ownership is third-party (the immutable field),
+// so the export ban cannot be bypassed by editing disclosure_status.
+const DISCLOSURE_STATES = new Set(["n/a", "discovered", "embargoed", "reported",
+  "acknowledged", "fix_in_progress", "fixed", "disclosed", "published", "withdrawn"]);
+const DISCLOSURE_CLOSED = new Set(["withdrawn"]);   // case closed: munition inert, in-box only
+const isThirdParty = (m) => String(m.ownership || "").replace("_", "-") === "third-party";
+
+// arm is permitted only in-box against the discovered copy, and refused once the case
+// is withdrawn. (embargoed/reported/.../disclosed/published all still allow in-box arming.)
+function gateArm(m, target) {
+  if (!isThirdParty(m)) return;
+  if (DISCLOSURE_CLOSED.has(m.disclosure_status)) {
+    const e = new Error(`arm refused: disclosure case for ${m.id} is '${m.disclosure_status}' (closed; in-box inert only) [disclosure-policy.md §8]`);
+    e.code = "DISCLOSURE_CLOSED"; throw e;
+  }
+  if (target && m.target_match && m.target_match !== "n/a" && target !== m.target_match) {
+    const e = new Error(`arm refused: ${m.id} may be armed only against its discovered target '${m.target_match}', not '${target}' [disclosure-policy.md §8]`);
+    e.code = "DISCLOSURE_INBOX_ONLY"; throw e;
+  }
+}
+// A third-party find is NEVER exportable: disclosure releases the vuln, never the weapon
+// (§2/§7/§8). Keyed on ownership (immutable), so no status change can unlock it.
+function gateExport(m) {
+  if (isThirdParty(m)) {
+    const e = new Error(`export refused: ${m.id} is a third-party find under coordinated disclosure; the weapon is never exported [disclosure-policy.md §2/§7/§8]`);
+    e.code = "EXPORT_FORBIDDEN"; throw e;
+  }
+}
+
 export function openStore(dir, opts = {}) {
   const key = deriveKey(opts.key || process.env.AEGIS_STORE_KEY || randomBytes(32).toString("hex"));
   const munDir = join(dir, "munitions");
@@ -126,7 +156,7 @@ export function openStore(dir, opts = {}) {
     // refused (CHAMBER_UNAVAILABLE) — the green-tier behaviour. The armed state is
     // transient: armed <=> custody_state "armed" <=> mid-run; it must be reverted by
     // disarm on run end/kill.
-    arm(id, { authorization, chamber_run_id } = {}) {
+    arm(id, { authorization, chamber_run_id, target = null } = {}) {
       requireHumanAuthz("arm", authorization);
       if (!chamber_run_id) {
         const e = new Error("arming refused: no active detonation chamber (chamber_run_id required)");
@@ -135,6 +165,7 @@ export function openStore(dir, opts = {}) {
       }
       const m = load(id);
       if (m.custody_state === "disposed") throw new Error(`munition ${id} is disposed`);
+      gateArm(m, target);   // disclosure-policy.md §8: in-box only, refused once withdrawn
       m.armed = true; m.custody_state = "armed";
       appendEvent(m, { action: "arm", actor: authorization.actor, run_id: chamber_run_id, authorization, reason: "armed for detonation" });
       save(m);
@@ -175,6 +206,40 @@ export function openStore(dir, opts = {}) {
       save(m);
       return { ...summary(m), shredded: true };
     },
+
+    // Export a munition's artifact out of the store. Human-authorized AND gated by the
+    // disclosure overlay: a third-party find is NEVER exportable (disclosure-policy.md
+    // §2/§7/§8) — coordinated disclosure releases the vulnerability, never the weapon.
+    // Owned/benign munitions may be exported with authorization.
+    export(id, { authorization, destination = "unspecified", actor = authorization?.actor, reason = "export" } = {}) {
+      requireHumanAuthz("export", authorization);
+      const m = load(id);
+      if (m.custody_state === "disposed") throw new Error(`munition ${id} is disposed`);
+      if (m.armed) throw new Error(`cannot export an armed munition ${id}`);
+      gateExport(m);                       // third-party => EXPORT_FORBIDDEN
+      const artifact = m.artifact_enc ? JSON.parse(decrypt(key, m.artifact_enc).toString("utf8")) : null;
+      appendEvent(m, { action: "export", actor, authorization, reason, extra: { destination } });
+      save(m);
+      return { ...summary(m), exported: true, artifact };
+    },
+
+    // Advance the disclosure overlay (disclosure-policy.md §8 — the store's
+    // disclosure_status field IS the CVD state machine). Driven by the disclosure
+    // workflow, which human-gates the transitions themselves; here it is recorded and
+    // the arm/export gates follow it. Ownership is immutable, so this never unlocks
+    // export on a third-party find.
+    set_disclosure_status(id, status, { actor = "disclosure", run_id = null, reason = "disclosure transition" } = {}) {
+      if (!DISCLOSURE_STATES.has(status)) throw new Error(`unknown disclosure_status '${status}'`);
+      const m = load(id);
+      if (m.custody_state === "disposed") throw new Error(`munition ${id} is disposed`);
+      const from = m.disclosure_status;
+      m.disclosure_status = status;
+      appendEvent(m, { action: "disclosure_status", actor, run_id, reason, extra: { from, to: status } });
+      save(m);
+      return summary(m);
+    },
+
+    get(id) { return summary(load(id)); },
 
     list() {
       if (!existsSync(munDir)) return [];
