@@ -34,8 +34,8 @@ function defaults() {
     store_dir: join(home, "store"),
     log_dir: join(home, "logs"),
     goose_state_dir: join(home, "goose"),
-    fuzz_image: "spike-fuzz:latest",
-    develop_image: "spike-develop:latest",
+    fuzz_image: "aegis-fuzz:latest",
+    develop_image: "aegis-develop:latest",
     // Stable keys so the persistent store stays decryptable/verifiable across runs.
     marker_key: null,
     store_key: null,

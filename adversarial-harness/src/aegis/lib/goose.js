@@ -18,11 +18,11 @@ function seamExtension(kind, cfg, { target, binary } = {}) {
     AEGIS_STORE_KEY: cfg.store_key,
   };
   if (kind === "discover") {
-    const env = { ...shared, SPIKE_IMAGE: cfg.fuzz_image, MEDIATION_LOG: join(cfg.log_dir, "discover.log") };
+    const env = { ...shared, AEGIS_FUZZ_IMAGE: cfg.fuzz_image, MEDIATION_LOG: join(cfg.log_dir, "discover.log") };
     return `${extPrefix(env)} node ${PATHS.mediationSeam}`;
   }
   const env = {
-    ...shared, SPIKE_DEVELOP_IMAGE: cfg.develop_image, SESSION_SERVER: PATHS.sessionServer,
+    ...shared, AEGIS_DEVELOP_IMAGE: cfg.develop_image, SESSION_SERVER: PATHS.sessionServer,
     MEDIATION_LOG: join(cfg.log_dir, "develop.log"),
   };
   // A host binary (--binary) is mounted read-only at /work/task_target by the seam

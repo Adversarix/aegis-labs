@@ -38,7 +38,7 @@ a human exploit developer does, instead of stateless run-once calls.
 
 `SEAM_MODE` (enforcing|log-only), `MEDIATION_LOG`, `DEV_TOOLS` (allowlist of tools to expose;
 the ablations drop `debug,find_offset` or `leak,build_exploit_leak`), `AEGIS_MARKER_KEY`,
-`SPIKE_DEVELOP_IMAGE`, `SESSION_SERVER` (host path to `session_server.py` to mount),
+`AEGIS_DEVELOP_IMAGE`, `SESSION_SERVER` (host path to `session_server.py` to mount),
 `SPIKE_TARGET` (which in-container binary to target: `/work/ret2win` default, `/work/ramp1`
 for the PIE/ASLR ramp rung).
 

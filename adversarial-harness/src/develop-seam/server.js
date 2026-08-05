@@ -14,7 +14,7 @@
 //   DEV_TOOLS        comma-list of tools to EXPOSE (default all). The ablation
 //                    drops `debug` and `find_offset` to measure the IAT payoff.
 //   AEGIS_MARKER_KEY per-run HMAC key (default random)
-//   SPIKE_DEVELOP_IMAGE   sandbox image (default spike-develop:latest)
+//   AEGIS_DEVELOP_IMAGE   sandbox image (default aegis-develop:latest)
 //   SESSION_SERVER   host path to session_server.py to mount (default ../develop/session_server.py)
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -29,7 +29,7 @@ import { openStore } from "../munitions-store/store.js";
 
 const MODE = (process.env.SEAM_MODE || "enforcing").toLowerCase();
 const LOG = process.env.MEDIATION_LOG || new URL("./mediation.log", import.meta.url).pathname;
-const IMAGE = process.env.SPIKE_DEVELOP_IMAGE || "spike-develop:latest";
+const IMAGE = process.env.AEGIS_DEVELOP_IMAGE || "aegis-develop:latest";
 const SESSION_SERVER = process.env.SESSION_SERVER || new URL("../develop/session_server.py", import.meta.url).pathname;
 const MARKER_KEY = process.env.AEGIS_MARKER_KEY || randomBytes(32).toString("hex");
 // Munitions store for the discovery->develop handoff (shared via AEGIS_STORE).

@@ -67,6 +67,6 @@ tier, sandbox-only. `mediation-seam` tests still pass 11/11. Traces:
 ## Reproduce
 
 ```bash
-cd adversarial-harness/src/develop && docker build -t spike-develop:latest .
+cd adversarial-harness/src/develop && docker build -t aegis-develop:latest .
 cd ../develop-seam && npm install && node ramp3-test.mjs   # canary leak + bypass to L4
 ```

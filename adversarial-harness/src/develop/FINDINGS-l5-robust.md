@@ -70,6 +70,6 @@ Beyond develop: the amber / microVM substrate and the detonate stage (`DESIGN.md
 ## Reproduce
 
 ```bash
-cd adversarial-harness/src/develop && docker build -t spike-develop:latest .
+cd adversarial-harness/src/develop && docker build -t aegis-develop:latest .
 cd ../develop-seam && npm install && node l5-test.mjs   # adaptive = L5 robust; static = fragile
 ```

@@ -29,7 +29,7 @@ ok("extractReproHex returns '' on empty/undefined input",
    extractReproHex("") === "" && extractReproHex(undefined) === "");
 
 // --- integration: real sandbox, gated on Docker + the fuzz image ----------------
-const IMAGE = process.env.SPIKE_IMAGE || "spike-fuzz:latest";
+const IMAGE = process.env.AEGIS_FUZZ_IMAGE || "aegis-fuzz:latest";
 const haveImage = (() => {
   try { execFileSync("docker", ["image", "inspect", IMAGE], { stdio: "ignore", timeout: 8000 }); return true; }
   catch { return false; }

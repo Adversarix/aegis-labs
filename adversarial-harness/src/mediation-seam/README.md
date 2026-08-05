@@ -50,7 +50,7 @@ green-tier tools; deferred with the rest of red-tier work.
 `SEAM_MODE`, `MEDIATION_LOG`, `SEAM_TOOLS` (which tools to *expose* — distinct from
 policy, which decides whether an exposed tool may *run*), `AEGIS_SCOPE` (path to a
 run-scope JSON; see `scope.example.json`), `AEGIS_MARKER_KEY`, `AEGIS_KILL`,
-`AEGIS_KILL_FILE`, `SPIKE_IMAGE`.
+`AEGIS_KILL_FILE`, `AEGIS_FUZZ_IMAGE`.
 
 ## Tests
 

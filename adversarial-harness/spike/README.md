@@ -70,7 +70,7 @@ See `../FINDINGS-week-one-spike.md` for the full write-up.
 
 ```bash
 # build the sandbox image (apt clang at build time; runs are --network none)
-( cd target && docker build -t spike-fuzz:latest . )
+( cd target && docker build -t aegis-fuzz:latest . )
 # install seam deps (the seam graduated to ../src/mediation-seam)
 ( cd ../src/mediation-seam && npm install )
 # run Goose with ONLY the mediation seam loaded, security tools behind it

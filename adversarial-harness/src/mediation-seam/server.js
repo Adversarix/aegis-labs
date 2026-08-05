@@ -25,7 +25,7 @@
 //   AEGIS_MARKER_KEY   per-run HMAC key (default: random ephemeral)
 //   AEGIS_KILL         "1" to trip the kill-gate externally
 //   AEGIS_KILL_FILE    path; if it exists, the kill-gate is tripped
-//   SPIKE_IMAGE        sandbox image (default spike-fuzz:latest)
+//   AEGIS_FUZZ_IMAGE        sandbox image (default aegis-fuzz:latest)
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -40,7 +40,7 @@ import { openStore } from "../munitions-store/store.js";
 
 const MODE = (process.env.SEAM_MODE || "enforcing").toLowerCase();
 const LOG = process.env.MEDIATION_LOG || new URL("./mediation.log", import.meta.url).pathname;
-const IMAGE = process.env.SPIKE_IMAGE || "spike-fuzz:latest";
+const IMAGE = process.env.AEGIS_FUZZ_IMAGE || "aegis-fuzz:latest";
 const ALLOW_EXPOSE = (process.env.SEAM_TOOLS || "run_shell,run_poc,fuzz,promote_finding")
   .split(",").map((s) => s.trim()).filter(Boolean);
 const MARKER_KEY = process.env.AEGIS_MARKER_KEY || randomBytes(32).toString("hex");
