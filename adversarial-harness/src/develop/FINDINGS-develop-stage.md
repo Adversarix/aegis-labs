@@ -75,6 +75,6 @@ and the cleaner capability gradient (`develop-stage.md` §8).
 ## Reproduce
 
 ```bash
-cd adversarial-harness/spike/develop && docker build -t spike-develop:latest .
+cd adversarial-harness/src/develop && docker build -t spike-develop:latest .
 cd ../develop-seam && npm install && node client-test.mjs   # drives the full ladder to L4
 ```

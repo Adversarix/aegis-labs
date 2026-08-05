@@ -69,6 +69,6 @@ red-bound exploits.
 ## Reproduce
 
 ```bash
-cd adversarial-harness/spike/develop && docker build -t spike-develop:latest .
+cd adversarial-harness/src/develop && docker build -t spike-develop:latest .
 cd ../develop-seam && npm install && node ramp1-test.mjs   # PIE/ASLR leak-based exploit to L4
 ```

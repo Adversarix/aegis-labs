@@ -81,6 +81,6 @@ target), and the amber / microVM substrate for third-party or red-bound exploits
 ## Reproduce
 
 ```bash
-cd adversarial-harness/spike/develop && docker build -t spike-develop:latest .
+cd adversarial-harness/src/develop && docker build -t spike-develop:latest .
 cd ../develop-seam && npm install && node ramp2-test.mjs   # gadget search + ROP chain to L4
 ```

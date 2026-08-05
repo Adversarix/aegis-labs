@@ -1,7 +1,7 @@
 # Scoring Adapter Interface
 
 **Status:** Spec (draft v0.1) · **Date:** 2026-08-03 · Spec of: [`DESIGN.md`](./DESIGN.md) §7 (Measurement), §1.1 (neutrality)
-Related: [`discovery-stage.md`](./discovery-stage.md) §5.1 scoring, [`spike/compare/`](./spike/compare), [`spike/exploitgym-adapter/`](./spike/exploitgym-adapter)
+Related: [`discovery-stage.md`](./discovery-stage.md) §5.1 scoring, [`src/compare/`](./src/compare), [`src/exploitgym-adapter/`](./src/exploitgym-adapter)
 
 ## 1. Why this exists
 

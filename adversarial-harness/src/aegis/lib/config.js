@@ -6,18 +6,18 @@ import { dirname, join, resolve } from "node:path";
 import { homedir } from "node:os";
 import { randomBytes } from "node:crypto";
 
-// Package layout: <spike>/aegis/lib/config.js -> spike root is two levels up.
+// Package layout: <src>/aegis/lib/config.js -> the harness src root is two levels up.
 const LIB_DIR = dirname(fileURLToPath(import.meta.url));
 const AEGIS_DIR = resolve(LIB_DIR, "..");
-export const SPIKE_DIR = resolve(AEGIS_DIR, "..");
+export const ROOT_DIR = resolve(AEGIS_DIR, "..");
 
 // Absolute paths to the components the CLI drives.
 export const PATHS = {
-  spike: SPIKE_DIR,
-  mediationSeam: join(SPIKE_DIR, "mediation-seam", "server.js"),
-  developSeam: join(SPIKE_DIR, "develop-seam", "server.js"),
-  sessionServer: join(SPIKE_DIR, "develop", "session_server.py"),
-  storeLib: join(SPIKE_DIR, "munitions-store", "store.js"),
+  root: ROOT_DIR,
+  mediationSeam: join(ROOT_DIR, "mediation-seam", "server.js"),
+  developSeam: join(ROOT_DIR, "develop-seam", "server.js"),
+  sessionServer: join(ROOT_DIR, "develop", "session_server.py"),
+  storeLib: join(ROOT_DIR, "munitions-store", "store.js"),
 };
 
 const CONFIG_PATH = process.env.AEGIS_CONFIG || join(homedir(), ".config", "aegis", "config.json");

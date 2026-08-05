@@ -11,8 +11,8 @@ right extension wired in (`DESIGN.md` §4 L1 realized as a wrapper, not a fork).
 No dependencies (Node builtins only). Link the binary, or run it directly:
 
 ```bash
-node adversarial-harness/spike/aegis/bin/aegis.js <command>
-# or: (cd adversarial-harness/spike/aegis && npm link)  ->  aegis <command>
+node adversarial-harness/src/aegis/bin/aegis.js <command>
+# or: (cd adversarial-harness/src/aegis && npm link)  ->  aegis <command>
 ```
 
 ## Commands
