@@ -39,6 +39,25 @@ node operator.test.mjs                             # 20 tests: classifier + seam
 
 Options: `--seconds <n>` hunt budget, `--out <dir>` run artifacts + store, `--store <dir>`.
 
+## Two ways to drive the same seam
+
+`operator.mjs` is a **deterministic** MCP client: it calls the seam in a fixed
+`hunt -> reproduce -> triage -> promote_finding` sequence — good for a reproducible baseline.
+
+`seam.js` is a plain MCP stdio server, so an **agent** can drive it instead. The `aegis` CLI
+wires exactly that:
+
+```bash
+aegis operator                 # Goose drives the loop autonomously (uses agent-instructions.md)
+aegis operator --interactive   # drive it turn by turn
+aegis operator --dry-run       # print the exact `goose run ... --with-extension` command
+```
+
+Same enforcing gate either way: the run is green-tier, scoped to `hunt`/`reproduce`/`triage`/
+`promote_finding`, and everything else (a shell, exploit-dev tools, network) is default-denied.
+The agent's reasoning is [`agent-instructions.md`](./agent-instructions.md); disclosure is not a
+tool (the harness finds, a human discloses).
+
 ## Honest scope (remaining)
 
 Discovery is a single fuzz tool (no triage/dedup/minimization or static/RE). The stb finding is a

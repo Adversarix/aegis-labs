@@ -82,6 +82,16 @@ ok("develop --binary rejects a non-ELF", badElf.status === 1 && /not an ELF/.tes
 
 ok("develop --binary rejects a missing file", aegis(["develop", "--binary", join(HOME, "nope"), "--dry-run"]).status === 1);
 
+// --- operator dry-run: cockpit wiring ---
+const op = aegis(["operator", "--dry-run"]).out;
+ok("operator wires the operator seam", op.includes("operator/seam.js"));
+ok("operator sets OPERATOR_IMAGE + enforcing + store",
+  op.includes("OPERATOR_IMAGE=") && op.includes("SEAM_MODE=enforcing") && op.includes("AEGIS_STORE="));
+ok("operator defaults to the shipped agent instructions", op.includes("-i") && op.includes("agent-instructions.md"));
+ok("operator does not wire develop-only env", !op.includes("SESSION_SERVER=") && !op.includes("SPIKE_TARGET="));
+const opTask = aegis(["operator", "-t", "hunt then stop", "--dry-run"]).out;
+ok("operator -t overrides the default instructions", opTask.includes("hunt then stop") && !opTask.includes("agent-instructions.md"));
+
 // --- store: seed a munition in the configured store, then drive the CLI ---
 const { openStore } = await import(join(DIR, "..", "munitions-store", "store.js"));
 const store = openStore(cfg.store_dir, { key: cfg.store_key });
@@ -99,6 +109,7 @@ ok("doctor runs and prints checks", /checks passed/.test(aegis(["doctor"]).out))
 
 // --- help ---
 ok("help lists subcommands", /aegis develop/.test(aegis(["help"]).out));
+ok("help lists the operator cockpit", /aegis operator/.test(aegis(["help"]).out));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);

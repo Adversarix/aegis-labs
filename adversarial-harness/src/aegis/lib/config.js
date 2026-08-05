@@ -16,6 +16,8 @@ export const PATHS = {
   root: ROOT_DIR,
   mediationSeam: join(ROOT_DIR, "mediation-seam", "server.js"),
   developSeam: join(ROOT_DIR, "develop-seam", "server.js"),
+  operatorSeam: join(ROOT_DIR, "operator", "seam.js"),
+  operatorInstructions: join(ROOT_DIR, "operator", "agent-instructions.md"),
   sessionServer: join(ROOT_DIR, "develop", "session_server.py"),
   storeLib: join(ROOT_DIR, "munitions-store", "store.js"),
 };
@@ -36,6 +38,7 @@ function defaults() {
     goose_state_dir: join(home, "goose"),
     fuzz_image: "aegis-fuzz:latest",
     develop_image: "aegis-develop:latest",
+    operator_image: "aegis-operator-stb:latest",
     // Stable keys so the persistent store stays decryptable/verifiable across runs.
     marker_key: null,
     store_key: null,

@@ -23,6 +23,7 @@ Usage:
   aegis config set <key> <value>      set a config value
   aegis discover [opts]               run the discovery seam (fuzz + promote_finding)
   aegis develop --target <t> [opts]   run the develop seam against a target
+  aegis operator [opts]               run the operator cockpit (Goose drives hunt->custody on a real target)
   aegis store <list|show|verify|dispose> [args]   custody store (human path)
 
 Run options (discover/develop):
@@ -104,6 +105,7 @@ async function main() {
 
       case "discover": return doRun("discover", rest);
       case "develop": return doRun("develop", rest);
+      case "operator": return doRun("operator", rest);
 
       case "store": {
         const [ssub, ...sargs] = rest;

@@ -24,12 +24,20 @@ aegis config get [key]              show config (secrets redacted)
 aegis config set <key> <value>      set a config value
 aegis discover [opts]               run the discovery seam (fuzz + promote_finding)
 aegis develop --target <t> [opts]   run the develop seam against a target
+aegis operator [opts]               run the operator cockpit (Goose drives hunt->custody on a real target)
 aegis store <list|show|verify|dispose> [args]   custody store (human path)
 ```
 
-Run options (discover/develop): `-t/--task`, `-i/--instructions`, `-s/--interactive`,
+Run options (discover/develop/operator): `-t/--task`, `-i/--instructions`, `-s/--interactive`,
 `--max-turns`, `--binary <path>`, `--model`, `--provider`, `--dry-run`. Develop targets:
 `ret2win, ramp1, ramp2, ramp3, ramp4`.
+
+`operator` is the cockpit face: it wires the operator seam (`hunt`, `reproduce`, `triage`,
+`promote_finding`, green tier only, everything else default-denied) and lets Goose drive the
+research loop against a real third-party target baked into `OPERATOR_IMAGE`. With no `-t`/`-i`
+it defaults to the shipped agent instructions (`operator/agent-instructions.md`); disclosure is
+deliberately NOT a tool (the harness finds; a human discloses). There is no `--target`/`--binary`
+— the target ships in the image.
 
 `--binary <path>` (develop) points the run at an arbitrary target instead of a baked one: the
 seam mounts it read-only at `/work/task_target` (via `AEGIS_TASK_BINARY`) and it overrides
@@ -60,6 +68,9 @@ aegis develop --target ramp1 --interactive
 aegis develop --binary /path/to/your/target --interactive
 # one-shot, print the exact Goose command without running it:
 aegis develop --target ramp4 -t "leak the canary and win()'s address, then chain them" --dry-run
+# operator cockpit: let Goose drive hunt -> custody on the baked real target:
+aegis operator                       # autonomous, uses the shipped agent instructions
+aegis operator --interactive         # drive the loop turn by turn
 # custody: list, verify integrity, and dispose (human-authorized) a munition:
 aegis store list
 aegis store verify <id>
@@ -69,7 +80,7 @@ aegis store dispose <id> --role custodian --actor alice --reason "study closed"
 ## Tests
 
 ```bash
-node aegis.test.mjs   # 26 tests: config, command construction, --binary arch check, target validation, store path
+node aegis.test.mjs   # 32 tests: config, command construction, --binary arch check, target validation, operator wiring, store path
 ```
 
 ## Not covered here (by design)
