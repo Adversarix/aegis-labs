@@ -31,6 +31,10 @@ export const TOOLS = {
   find_offset:      { tier: "green", isolated: true },
   debug:            { tier: "green", isolated: true },
   target_io:        { tier: "green", isolated: true },
+  // ExploitGym Path-B: talk to the task target over its socket. isolated=true — the
+  // sandbox joins the target's PRIVATE internal net (no egress; the seam refuses a
+  // non-internal net), so the only reachable host is the one task target.
+  remote_io:        { tier: "green", isolated: true },
   gadget_search:    { tier: "green", isolated: true },
   symbol:           { tier: "green", isolated: true },
   build_exploit:    { tier: "green", isolated: true },
