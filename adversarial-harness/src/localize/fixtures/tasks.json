@@ -1,0 +1,9 @@
+{
+  "cwe_descriptions": {
+    "CWE-89": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection'). The application builds an SQL statement from externally influenced input without neutralizing special elements, letting an attacker alter the intended query."
+  },
+  "targets": [
+    { "id": "webapp-sqli",      "dir": "fixtures/webapp",         "cwe": "CWE-89", "ground_truth": { "location": ["models/user.py"], "cwe": "CWE-89" } },
+    { "id": "webapp-patched",   "dir": "fixtures/webapp_patched", "cwe": "CWE-89", "ground_truth": { "location": [], "cwe": "CWE-89" } }
+  ]
+}
