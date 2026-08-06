@@ -12,6 +12,9 @@ export { edgeFingerprint } from "./edge.js";
 export { LIE_DETECTORS } from "./lies.js";
 export { HEADLESS_DETECTORS } from "./headless.js";
 export { EDGE_DETECTORS } from "./edge.js";
+// Collectors that build the two halves of a bundle (browser + edge).
+export { collectClient } from "../collect/client.js";
+export { edgeContext } from "../collect/edge.js";
 
 // Everything, in evaluation order. Client-side detectors first, edge last.
 export const ALL_DETECTORS = [

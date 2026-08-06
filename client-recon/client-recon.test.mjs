@@ -8,6 +8,8 @@ import { analyze, stableHash, edgeFingerprint, score, claim } from "./lib/index.
 import { platformMismatch, languageMismatch, impossibleScreen } from "./lib/lies.js";
 import { webdriverFlag, softwareRenderer } from "./lib/headless.js";
 import { datacenterOrigin, missingBrowserHeaders } from "./lib/edge.js";
+import { collectClient } from "./collect/client.js";
+import { edgeContext } from "./collect/edge.js";
 
 const DIR = dirname(fileURLToPath(import.meta.url));
 const BIN = join(DIR, "bin", "client-recon.js");
@@ -111,6 +113,70 @@ const advRun = cli([join(DIR, "fixtures", "headless-puppeteer.json")]);
 ok("CLI exits 1 on adversarial bundle", advRun.status === 1 && /verdict:\s+adversarial/.test(advRun.out));
 const jsonRun = cli(["--json", join(DIR, "fixtures", "spoofed-ua.json")]);
 ok("CLI --json emits parseable output", (() => { try { JSON.parse(jsonRun.out); return true; } catch { return false; } })());
+
+// --- collect/edge: build the edge half from headers + cf context ---
+const edgeFromObj = edgeContext({
+  headers: {
+    "User-Agent": "Mozilla/5.0 Chrome/126",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip",
+    "CF-Connecting-IP": "203.0.113.9",
+    "sec-ch-ua": '"Chromium";v="126"',
+  },
+  cf: { country: "US", asn: 7922, asOrganization: "Comcast", tlsVersion: "TLSv1.3", httpProtocol: "HTTP/2" },
+});
+ok("edgeContext lifts UA from headers", edgeFromObj.userAgent === "Mozilla/5.0 Chrome/126");
+ok("edgeContext lifts client IP", edgeFromObj.ip === "203.0.113.9");
+ok("edgeContext merges cf fields", edgeFromObj.asOrganization === "Comcast" && edgeFromObj.tlsVersion === "TLSv1.3");
+ok("edgeContext records lowercased header order", edgeFromObj.headerOrder.includes("user-agent"));
+ok("edgeContext groups client hints", edgeFromObj.clientHints && edgeFromObj.clientHints["sec-ch-ua"] === '"Chromium";v="126"');
+ok("edgeContext omits absent fields", !("city" in edgeFromObj));
+
+// A WHATWG Headers instance is accepted the same way as a plain object.
+const wh = new Headers({ "user-agent": "curl/8", "x-forwarded-proto": "http/1.1" });
+const edgeFromHeaders = edgeContext({ headers: wh });
+ok("edgeContext accepts a Headers instance", edgeFromHeaders.userAgent === "curl/8");
+ok("edgeContext falls back to x-forwarded-proto", edgeFromHeaders.httpProtocol === "http/1.1");
+ok("edgeContext tolerates no input", typeof edgeContext() === "object");
+
+// --- collect/edge -> analyze round trip flags a non-browser client ---
+const rt = analyze({ edge: edgeContext({
+  headers: { "user-agent": "python-requests/2.31.0", host: "x" },
+  cf: { asOrganization: "DigitalOcean LLC", asn: 14061 },
+}) });
+ok("collected edge round-trips through analyze", rt.claims.some((c) => c.id === "net.datacenter-origin"));
+
+// --- collect/client: runs under an injected (mock) environment ---
+const mockEnv = {
+  navigator: {
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0.0.0",
+    platform: "Win32", webdriver: false, language: "en-US", languages: ["en-US", "en"],
+    maxTouchPoints: 0, hardwareConcurrency: 8, deviceMemory: 8,
+    permissions: { query: async () => ({ state: "prompt" }) },
+  },
+  screen: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1040 },
+  window: { outerWidth: 1920, outerHeight: 1030, devicePixelRatio: 1, chrome: {} },
+  performance: { now: () => 0 },
+  Intl: { DateTimeFormat: () => ({ resolvedOptions: () => ({ timeZone: "America/New_York" }) }) },
+  Notification: { permission: "default" },
+};
+const collected = await collectClient(mockEnv);
+ok("collectClient reads the mock UA", collected.ua.includes("Chrome/126"));
+ok("collectClient reads screen + timezone", collected.screenW === 1920 && collected.timezone === "America/New_York");
+ok("collectClient reads window.chrome presence", collected.hasChromeObject === true);
+ok("collectClient resolves permissions state", collected.permissionsNotification === "prompt");
+ok("collectClient omits unobserved WebGL fields", !("webglRenderer" in collected));
+// Under a mock, sampled "native" functions (e.g. permissions.query) are ordinary
+// JS, so toStringNative is false by construction — that is the detector working,
+// not a real client. Real browser globals are native. Normalize it, then the
+// collected bundle should read clean end to end.
+ok("collectClient flags mock natives as non-native", collected.toStringNative === false);
+ok("collected client bundle is clean through analyze",
+  analyze({ client: { ...collected, toStringNative: true } }).verdict === "clean");
+
+// A malformed env must not throw — probes degrade to omitted fields.
+const collectedEmpty = await collectClient({});
+ok("collectClient tolerates an empty environment", typeof collectedEmpty === "object");
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

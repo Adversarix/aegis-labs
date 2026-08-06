@@ -51,6 +51,20 @@ reports (`navigator`, `screen`, WebGL, timezone, permissions); `edge.*` matches
 the request context a proxy/CDN sees (geo, ASN/org, TLS parameters, HTTP
 protocol, header order). See `fixtures/` for complete, synthetic examples.
 
+## Collecting the bundle
+
+You don't have to build the bundle by hand — `collect/` ships both halves:
+
+- `collect/client.js` → `collectClient()` runs in the browser and returns the
+  `client` object (best-effort, never throws, async for Client Hints).
+- `collect/edge.js` → `edgeContext({ headers, cf })` runs on your server/edge and
+  returns the `edge` object from the request headers plus a Cloudflare-style
+  connection context. Accepts a WHATWG `Headers` instance or a plain object.
+
+The browser POSTs its half; the server builds the edge half from the same request
+and runs `analyze()` — the client never sees the verdict. See
+[`collect/README.md`](./collect/) for the end-to-end wiring.
+
 ## Usage
 
 ```js
