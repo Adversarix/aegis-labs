@@ -1,0 +1,42 @@
+{
+  "client": {
+    "ua": "Mozilla/5.0 (Linux; x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/126.0.0.0 Safari/537.36",
+    "uaMobile": false,
+    "uaPlatform": "Linux",
+    "platform": "Linux x86_64",
+    "webdriver": true,
+    "language": "en-US",
+    "languages": [],
+    "hardwareConcurrency": 2,
+    "deviceMemory": 8,
+    "screenW": 800,
+    "screenH": 600,
+    "availW": 800,
+    "availH": 600,
+    "outerW": 0,
+    "outerH": 0,
+    "devicePixelRatio": 1,
+    "timezone": "UTC",
+    "hasChromeObject": false,
+    "webglVendor": "Google Inc.",
+    "webglRenderer": "Google SwiftShader",
+    "notificationPermission": "denied",
+    "permissionsNotification": "prompt",
+    "timerResolutionMs": 0,
+    "toStringNative": false
+  },
+  "edge": {
+    "ip": "198.51.100.7",
+    "country": "US",
+    "timezone": "America/Chicago",
+    "asn": 14618,
+    "asOrganization": "Amazon AWS EC2",
+    "tlsVersion": "TLSv1.3",
+    "tlsCipher": "AEAD-AES256-GCM-SHA384",
+    "tlsClientHelloLength": "300",
+    "httpProtocol": "HTTP/1.1",
+    "userAgent": "Mozilla/5.0 (Linux; x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/126.0.0.0 Safari/537.36",
+    "acceptLanguage": "en-US",
+    "headerOrder": ["host", "user-agent", "accept", "accept-encoding"]
+  }
+}

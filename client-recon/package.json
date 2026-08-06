@@ -1,0 +1,9 @@
+{
+  "name": "client-recon",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "client-recon — derive confidence-scored claims about a web client (spoofed self-report, headless/automation, datacenter origin) from browser + edge signals, for detection measurement.",
+  "bin": { "client-recon": "bin/client-recon.js" },
+  "scripts": { "test": "node client-recon.test.mjs" }
+}
