@@ -4,21 +4,43 @@ AEGIS Labs is the home for open-sourced research projects spun out of the commer
 work we do at [Adversarix](https://adversarix.com), an autonomous threat intelligence
 and response platform built around a live Threat Knowledge Graph.
 
-Adversarix continuously ingests threat intelligence, simulates adversarial behavior
-against an organization's real infrastructure topology, identifies detection gaps, and
-synthesizes prioritized advisories without waiting for human initiation. The papers and
-projects here document the methods behind that platform (the simulation models, the
-measurement frameworks, and the threat-modeling approaches) for public reference,
-citation, and reuse.
+The papers and projects here document the methods, measurement frameworks, and
+threat-modeling approaches behind that work, alongside AEGIS Labs research instruments
+such as the adversarial research harness, for public reference, citation, and reuse.
+Each is published as method, not as product.
 
 ---
 
 ## Publications
 
+### The Adversarial Research Harness: Measuring Autonomous Offensive-Agent Capability Inside Enforced Containment
+**August 2026 · Version 0.1 (draft)**
+
+[→ Download PDF](./adversarial-harness/AEGIS_Adversarial_Research_Harness_Whitepaper.pdf)
+
+Offensive-agent research pushes capability but rarely contains the agent; containment
+research builds strong controls but tests them against toy agents. This paper describes a
+general-purpose instrument that co-designs both: a security-native agentic CLI that drives
+any model through the offensive-research lifecycle (discover, develop, detonate, observe)
+while every action crosses a containment plane enforced in code rather than policy. It
+presents an end-to-end study in which a stock open-source agent runtime, driven entirely by
+non-Claude models, autonomously attacks a recognized exploit-development benchmark
+(ExploitGym) through the contained harness.
+
+**Key findings:**
+- Containment held on every run across four local and hosted models: zero denied actions bypassed and zero egress, even with a live network target and real exploit-development tooling
+- No model captured a flag on hard real memory-safety bugs, but reach and interaction-depth scale with capability where a binary solve rate cannot
+- A harness-enforced persistence loop drove ~10x the sustained exploitation effort of a single-shot run, isolating the residual bottleneck as genuine exploitation capability rather than the agent stopping early
+- Agentic persistence and exploitation capability are separable and both measurable; the harness measures and can compensate for the former so a solve rate reflects the latter
+
+**Topics:** contained offensive-agent measurement · code-enforced mediation plane · model-agnostic provider abstraction · exploit-development capability · ExploitGym / autonomous exploit range · agentic persistence vs. capability
+
+---
+
 ### Defending Against Polymorphic Attack Chains: How Autonomous Adversarial Simulation Closes the Detection Gap
 **July 2026 · Version 2.1**
 
-[→ Download PDF](./polymorphic-attack-chains/Adversarix_Polymorphic_Attack_Chains_Whitepaper.pdf)
+[→ Download PDF](./polymorphic-attack-chains/AEGIS_Polymorphic_Attack_Chains_Whitepaper.pdf)
 
 Modern threat actors don't follow a single kill chain. They maintain technique
 repertoires and rotate between them in response to what your detection stack catches.
@@ -43,7 +65,7 @@ from disclosure to advisory in under 90 seconds.
 ### Agentic Identity Pivots: Modeling Credential-Borne Lateral Movement in Breach Simulation
 **July 2026 · Version 1.1**
 
-[→ Download PDF](./agentic-identity-pivots/Adversarix_Agentic_Identity_Pivots_Whitepaper.pdf)
+[→ Download PDF](./agentic-identity-pivots/AEGIS_Agentic_Identity_Pivots_Whitepaper.pdf)
 
 As enterprise estates go agentic, with autonomous agents holding credentials, invoking tools,
 and reaching capability through MCP servers, shared-credential pivots become the dominant
@@ -65,7 +87,7 @@ quantified term in breach probability.
 ### Measuring TTP Extraction: A Reproducible Evaluation Framework for ATT&CK Technique Extraction from Threat Reports
 **July 2026 · Version 1.1**
 
-[→ Download PDF](./ttp-extraction-eval/Adversarix_TTP_Extraction_Eval_Whitepaper.pdf)
+[→ Download PDF](./ttp-extraction-eval/AEGIS_TTP_Extraction_Eval_Whitepaper.pdf)
 
 Extracting MITRE ATT&CK techniques from unstructured threat reporting is a core pipeline
 primitive, and notoriously hard to measure well. This paper describes an evaluation
@@ -87,7 +109,7 @@ three corpora of different provenance.
 ### Extracting ATT&CK from Real Advisories: A Leakage-Safe Benchmark and Backend-Model Comparison for TTP Ingestion
 **July 2026 · Version 0.1 (draft)**
 
-[→ Download PDF](./ttp-benchmark/Adversarix_TTP_Extraction_Benchmark_Whitepaper.pdf)
+[→ Download PDF](./ttp-benchmark/AEGIS_TTP_Extraction_Benchmark_Whitepaper.pdf)
 
 Which LLM should read a threat advisory and return its ATT&CK techniques, and how do you
 measure that honestly? This paper benchmarks four frontier models (Claude Opus 4.8, Kimi K3,
@@ -110,7 +132,7 @@ public derivation of the same internal methodology.
 ### Empirical Detection Posteriors: Closing the Loop from SIEM Firings to Breach Probability
 **July 2026 · Version 1.1**
 
-[→ Download PDF](./detection-posteriors/Adversarix_Empirical_Detection_Posteriors_Whitepaper.pdf)
+[→ Download PDF](./detection-posteriors/AEGIS_Empirical_Detection_Posteriors_Whitepaper.pdf)
 
 Breach simulations usually model detection as an assumption: a technique is "covered" if a
 rule exists for it. But a deployed rule that never fires is not coverage. This paper describes
@@ -131,7 +153,7 @@ and lowering it where rules fire cleanly.
 ### Containing the Simulated Adversary: A Safety Architecture for Autonomous Breach-and-Attack Simulation on Ephemeral Digital Twins
 **July 2026 · Version 0.1 (draft)**
 
-[→ Download PDF](./safe-agentic-bas/Adversarix_Safe_Agentic_BAS_Whitepaper.pdf)
+[→ Download PDF](./safe-agentic-bas/AEGIS_Safe_Agentic_BAS_Whitepaper.pdf)
 
 Breach-and-attack simulation is moving from human-driven scripts to autonomous agents
 that select ATT&CK techniques and detonate them through real offensive frameworks, which
@@ -171,14 +193,14 @@ with its own scoring rules.
 
 ---
 
-## About Adversarix
+## About AEGIS Labs
 
-Adversarix is an autonomous cybersecurity threat intelligence and response platform
-centered on a Threat Knowledge Graph. It continuously ingests threat intelligence,
-simulates adversarial behavior against live infrastructure topology, identifies detection
-gaps, and synthesizes prioritized advisories without waiting for human initiation.
+AEGIS Labs is the open-research home for the methods, measurement frameworks, and
+research instruments spun out of [Adversarix](https://adversarix.com), an autonomous
+threat-intelligence and response platform. Research here is published as method for
+public reference, citation, and reuse.
 
-[adversarix.com](https://adversarix.com) · [contact@adversarix.com](mailto:contact@adversarix.com)
+[github.com/Adversarix/aegis-labs](https://github.com/Adversarix/aegis-labs) · [contact@adversarix.com](mailto:contact@adversarix.com)
 
 ---
 
