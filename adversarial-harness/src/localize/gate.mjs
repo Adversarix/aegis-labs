@@ -19,6 +19,19 @@ export const LOCALIZER_SCOPE = {
   isolation: { require_sandbox: true },
 };
 
+// The CONFIRM scope: a DIFFERENT scope from the read-only localize loop. Confirm executes a
+// differential PoC against a candidate via run_poc — a dynamic tool that runs ONLY inside the
+// --network none sandbox (policy.js: run_poc isolated:true). Static navigation tools are not
+// needed here; run_poc is (discovery-stage.md §2.3 dynamic path). Keeping localize (read-only)
+// and confirm (execute-in-sandbox) as separate scopes is the point: the loop can never execute,
+// and confirm can only execute in isolation.
+export const CONFIRM_SCOPE = {
+  run_id: "localizer-confirm-run",
+  allowed_tiers: ["green"],
+  allowed_tools: ["run_poc"],
+  isolation: { require_sandbox: true },
+};
+
 // makeMediator wires a scope + kill switch + append-only log into a mediate(tool,args)
 // closure, mirroring operator/seam.js. `sink` defaults to appending JSONL to `log`; tests
 // pass an in-memory sink to assert on the trace without a file.

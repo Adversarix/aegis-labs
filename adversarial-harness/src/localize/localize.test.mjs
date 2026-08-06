@@ -1,9 +1,10 @@
 // Unit tests for the localizer slice — pure, no model / no Docker, so they run in CI.
 // Exercises: command→tool classification, the REAL gate routing (allow static / deny shell),
 // the mediated loop with injected fakes, hypothesize→confirm, and the scoring adapter.
-import { classifyCommand, makeMediator } from "./gate.mjs";
+import { classifyCommand, makeMediator, CONFIRM_SCOPE } from "./gate.mjs";
 import { localize } from "./localizer.mjs";
-import { toFindings, confirmSource } from "./finding.mjs";
+import { toFindings } from "./finding.mjs";
+import { confirmDynamic } from "./confirm.mjs";
 import * as scorer from "../scorers/discovery-localization.mjs";
 
 let pass = 0, fail = 0;
@@ -60,19 +61,40 @@ ok("rm -> run_shell (will be denied)", classifyCommand("rm -rf /") === "run_shel
   ok("loop continues past denial to abstain", r.abstained === true && r.completed === true);
 }
 
-// 5. hypothesize -> confirm
+// 5. hypothesize -> dynamic CONFIRM (fakes for run_poc + gate; live execution covered by run.mjs)
 {
-  const result = { cwe: "CWE-89", ranked_files: ["models/user.py"], abstained: false, calls: 3 };
-  const [f] = toFindings(result);
+  const [f] = toFindings({ cwe: "CWE-89", ranked_files: ["models/user.py"], abstained: false, calls: 3 });
   ok("finding starts hypothesized", f.status === "hypothesized" && f.bug_class === "CWE-89");
-  const vuln = `query = "SELECT * FROM users WHERE name = '%s'" % name\ncur.execute(query)`;
-  const patched = `cur.execute("SELECT * FROM users WHERE name = ?", (name,))`;
-  ok("vulnerable SQL confirmed", confirmSource(f, () => vuln).status === "confirmed_vuln");
-  ok("patched SQL dismissed", confirmSource(f, () => patched).status === "dismissed");
+  const eps = { "models/user.py": { call: "models.user:find_user_by_name", kind: "sql-user-lookup" } };
+  const allow = () => ({ decision: "allow", marker: { hmac: "m" } });
+  const deny = () => ({ decision: "deny", check: "default-deny" });
+
+  // confirm uses the run_poc scope, not the read-only localize scope
+  ok("confirm scope permits run_poc", CONFIRM_SCOPE.allowed_tools.includes("run_poc"));
+
+  const injected = confirmDynamic(f, { entrypoints: eps, runPoc: () => "benign\nVERDICT INJECTED", mediate: allow });
+  ok("PoC INJECTED -> confirmed_vuln", injected.status === "confirmed_vuln");
+  ok("confirmed finding carries a reproducer", injected.reproducer?.payload === "charlie' OR '1'='1");
+  ok("confirm evidence records the run_poc marker", injected.evidence.confirm.marker === "m");
+
+  const safe = confirmDynamic(f, { entrypoints: eps, runPoc: () => "VERDICT SAFE", mediate: allow });
+  ok("PoC SAFE -> dismissed", safe.status === "dismissed");
+
+  let ran = false;
+  const noEp = confirmDynamic(f, { entrypoints: {}, runPoc: () => { ran = true; return "VERDICT INJECTED"; }, mediate: allow });
+  ok("no entrypoint -> dismissed, PoC not run", noEp.status === "dismissed" && ran === false);
+
+  ran = false;
+  const denied = confirmDynamic(f, { entrypoints: eps, runPoc: () => { ran = true; return "VERDICT INJECTED"; }, mediate: deny });
+  ok("run_poc denied at gate -> dismissed, PoC not run", denied.status === "dismissed" && ran === false);
+
+  // harness dispatch for the other CWE kinds
   const cmdi = { ...f, bug_class: "CWE-78" };
-  ok("CWE-78 shell=True confirmed", confirmSource(cmdi, () => `subprocess.run("ping %s" % host, shell=True)`).status === "confirmed_vuln");
+  const cmdEp = { "models/user.py": { call: "checks:ping_host", kind: "cmd-exec" } };
+  ok("CWE-78 cmd-exec dispatch confirms on INJECTED", confirmDynamic(cmdi, { entrypoints: cmdEp, runPoc: () => "VERDICT INJECTED", mediate: allow }).status === "confirmed_vuln");
   const pathf = { ...f, bug_class: "CWE-22" };
-  ok("CWE-22 join+open confirmed", confirmSource(pathf, () => `path = os.path.join(BASE, name)\nopen(path)`).status === "confirmed_vuln");
+  const pathEp = { "models/user.py": { call: "storage:read_document", kind: "path-read" } };
+  ok("CWE-22 path-read dispatch confirms on INJECTED", confirmDynamic(pathf, { entrypoints: pathEp, runPoc: () => "VERDICT INJECTED", mediate: allow }).status === "confirmed_vuln");
 }
 
 // 6. scoring adapter
