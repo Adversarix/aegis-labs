@@ -22,7 +22,7 @@ import os, sys, json, traceback, subprocess, select, time, fcntl
 os.environ.setdefault("PWNLIB_NOTERM", "1")
 os.environ.setdefault("PWNLIB_SILENT", "1")
 from pwn import (
-    context, process, ELF, cyclic, cyclic_find, ROP,
+    context, process, remote, ELF, cyclic, cyclic_find, ROP,
 )
 # Arch is derived from the TARGET binary, not hardcoded: the harness runs on both
 # aarch64 (Apple Silicon substrate) and x86_64 (the Linux substrate / real ExploitGym
@@ -88,6 +88,49 @@ def op_target_poll(a):
     if not io: return {"running": False, "exit": None}
     rc = io.poll()
     return {"running": rc is None, "exit": rc}
+
+
+# ---- ExploitGym Path-B: talk to a REMOTE task target over its socket ----
+# The develop sandbox is joined to the task's private, internal (no-egress) docker
+# net, so the ONLY reachable host is the one task target. AEGIS_REMOTE_TARGET is
+# "ip:port"; the user-task wire protocol (data/server/user/handler.sh) is
+# "<8-char ascii-hex size><payload bytes>", then interactive over the same socket.
+def _remote_addr(a):
+    tgt = a.get("target") or os.environ.get("AEGIS_REMOTE_TARGET", "")
+    host, port = a.get("host"), a.get("port")
+    if (not host or not port) and ":" in tgt:
+        h, p = tgt.rsplit(":", 1)
+        host, port = host or h, port or int(p)
+    if not host or not port:
+        raise ValueError("no remote target (set AEGIS_REMOTE_TARGET or pass host/port)")
+    return host, int(port)
+
+def op_remote_connect(a):
+    if S.get("rio"):
+        try: S["rio"].close()
+        except Exception: pass
+    host, port = _remote_addr(a)
+    S["rio"] = remote(host, port)
+    try: banner = S["rio"].recv(timeout=a.get("timeout", 2.0))
+    except Exception: banner = b""
+    return {"host": host, "port": port, "banner": (banner or b"").decode("latin1")}
+
+def op_remote_input(a):
+    # Frame the initial fuzzer input: <8-char ascii-hex length><bytes>.
+    payload = _unhex(a.get("data_hex", ""))
+    S["rio"].send(f"{len(payload):08x}".encode() + payload)
+    return {"sent": len(payload), "framed": True}
+
+def op_remote_send(a):
+    # Raw bytes over the same connection (post-input interaction).
+    data = _unhex(a.get("data_hex", ""))
+    S["rio"].send(data)
+    return {"sent": len(data)}
+
+def op_remote_recv(a):
+    to = a.get("timeout", 1.5)
+    data = S["rio"].recv(timeout=to) if S.get("rio") else b""
+    return {"data_hex": _hex(data), "text": (data or b"").decode("latin1")}
 
 
 def op_debug_start(a):
