@@ -1,4 +1,4 @@
-#import "/typst/adversarix-whitepaper.typ": whitepaper, toc, callout, citation-block
+#import "/typst/aegis-whitepaper.typ": whitepaper, toc, callout, citation-block
 
 // Local colors matching the template palette (for bespoke elements).
 #let rule-gray = rgb("#d3dade")

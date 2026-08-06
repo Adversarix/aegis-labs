@@ -1,4 +1,4 @@
-#import "/typst/adversarix-whitepaper.typ": whitepaper, toc, callout, citation-block
+#import "/typst/aegis-whitepaper.typ": whitepaper, toc, callout, citation-block
 
 #show: whitepaper.with(
   title: "Empirical Detection Posteriors",

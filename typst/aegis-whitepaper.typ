@@ -1,6 +1,6 @@
-// Adversarix / AEGIS Labs whitepaper template (Typst 0.15).
-// Reconstructed from the published PDF design so the papers can be
-// maintained as source. Compile from the repo root, e.g.:
+// AEGIS Labs whitepaper template (Typst 0.15).
+// Maintained as source so the papers can be regenerated. Compile from the repo
+// root, e.g.:
 //   typst compile --root . detection-posteriors/whitepaper.typ <out.pdf>
 
 #let navy = rgb("#17262e")
@@ -50,12 +50,12 @@
   subtitle: "",
   version: "",
   date: "",
-  platform: "Adversarix Threat Intelligence Platform",
+  platform: "AEGIS Labs Research",
   kicker: "SECURITY RESEARCH",
   tiles: (),
   body,
 ) = {
-  set document(title: title + ": " + subtitle, author: "Adversarix, Inc.")
+  set document(title: title + ": " + subtitle, author: "AEGIS Labs")
   set text(font: "Helvetica Neue", size: 9.5pt, fill: ink)
   set par(justify: true, leading: 0.62em, spacing: 1.0em)
 
@@ -65,7 +65,7 @@
     #place(left + top, rect(width: 9pt, height: 100%, fill: teal))
     #pad(left: 2.4cm, right: 2.0cm, top: 1.7cm, bottom: 1.5cm)[
       #align(right)[
-        #text(fill: teal-bright, weight: "bold", size: 12.5pt, tracking: 3pt)[ADVERSARIX] \
+        #text(fill: teal-bright, weight: "bold", size: 12.5pt, tracking: 3pt)[AEGIS LABS] \
         #text(fill: gray-cover, size: 9pt)[Research Whitepaper]
       ]
       #v(6.4cm)
@@ -96,7 +96,7 @@
       #pad(left: 2.4cm, right: 2.0cm)[
         #line(length: 100%, stroke: 0.5pt + rgb("#37474f"))
         #v(0.25cm)
-        #text(fill: gray-soft, size: 7.5pt)[© 2026 Adversarix, Inc. All rights reserved. #h(0.6em) | #h(0.6em) adversarix.com]
+        #text(fill: gray-soft, size: 7.5pt)[© 2026 AEGIS Labs. All rights reserved. #h(0.6em) | #h(0.6em) github.com/Adversarix/aegis-labs]
       ]
     ]
   ]
@@ -107,7 +107,7 @@
     margin: (left: 2.15cm, right: 2.15cm, top: 2.5cm, bottom: 2.4cm),
     header: [
       #set text(size: 7.5pt, fill: gray-soft)
-      #title #h(1fr) Adversarix Research | 2026
+      #title #h(1fr) AEGIS Labs Research | 2026
       #v(-0.55em)
       #line(length: 100%, stroke: 0.9pt + navy)
     ],
@@ -115,7 +115,7 @@
       #line(length: 100%, stroke: 0.5pt + rule-gray)
       #v(-0.35em)
       #set text(size: 7.5pt, fill: gray-soft)
-      © 2026 Adversarix, Inc. All rights reserved. | adversarix.com
+      © 2026 AEGIS Labs. All rights reserved. | github.com/Adversarix/aegis-labs
       #h(1fr)
       #context [Page #counter(page).display()]
     ],

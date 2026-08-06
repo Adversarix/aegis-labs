@@ -1,10 +1,10 @@
-#import "/typst/adversarix-whitepaper.typ": whitepaper, toc, callout, citation-block
+#import "/typst/aegis-whitepaper.typ": whitepaper, toc, callout, citation-block
 
 #show: whitepaper.with(
   title: "The Adversarial Research Harness",
   subtitle: "Measuring Autonomous Offensive-Agent Capability Inside Enforced Containment",
   version: "0.1 (Draft)",
-  date: "August 2026 · AEGIS Labs",
+  date: "August 2026 · Draft",
   tiles: (
     ("0", "Sandbox escapes or denied-action bypasses, across every run"),
     ("4", "Models driven end to end, local and hosted, all Claude-free"),
