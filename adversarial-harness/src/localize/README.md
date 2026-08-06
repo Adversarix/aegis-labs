@@ -16,14 +16,21 @@ truth. Neutral by construction — the same loop/prompt/tools/scorer run for eve
 | `sandbox.mjs` | read-only `--network none` Docker exec of a navigation command (cwd persists) |
 | `backends.mjs` | shared system prompt (Antares report App A.1) + tool schemas + ollama chat |
 | `localizer.mjs` | the mediated loop (deps injected → unit-testable without a model/Docker) |
-| `finding.mjs` | `LocalizeResult` → `hypothesized` Findings; **CONFIRM** (static sink check; §8) |
+| `finding.mjs` | `LocalizeResult` → `hypothesized` Findings |
+| `confirm.mjs` | **dynamic CONFIRM** — a differential PoC per CWE, run via mediated `run_poc` in a sandbox; confirmed findings carry a reproducer (§8, discovery-stage.md §2.3/§3) |
 | `../scorers/discovery-localization.mjs` | File-F1 scoring adapter (scoring-adapter.md contract) |
 | `run.mjs` | head-to-head runner → `scorecard.{json,md}` |
 | `fixtures/` | `webapp` (CWE-89 SQLi, ground truth `models/user.py`) + `webapp_patched` (negative control) |
 
-The full discovery CONFIRM (§2.3) is dynamic (taint/fuzz/run_poc). This slice uses a **static
-sink confirm** as a deliberate stand-in for the source + CWE-known case — enough to demonstrate
-that a false positive is dismissed by CONFIRM, never by the scorer (§8).
+CONFIRM is **dynamic** (discovery-stage.md §2.3 dynamic path): for each candidate, `confirm.mjs`
+builds a harness that exercises the manifest-declared entrypoint with a BENIGN and a MALICIOUS
+input, runs it through the mediated `run_poc` tool inside a `--network none` sandbox, and confirms
+only if the malicious input triggers the vulnerability the benign one does not — proof by
+execution, not pattern matching. A confirmed Finding carries a `reproducer` (the §3 hinge to a
+proto-munition). A candidate with no entrypoint, or whose PoC does not trigger (e.g. a patched
+target), is `dismissed`. Confirm runs under its own `run_poc` scope, separate from the read-only
+localize loop — the loop can never execute, and confirm executes only in isolation. Harness kinds:
+`sql-user-lookup` (CWE-89, live-validated), `cmd-exec` (CWE-78), `path-read` (CWE-22).
 
 ## Test (CI-safe, no model/Docker)
 
