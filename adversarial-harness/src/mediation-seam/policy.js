@@ -60,6 +60,14 @@ export const TOOLS = {
   hunt:      { tier: "green", isolated: true },
   reproduce: { tier: "green", isolated: true },
   triage:    { tier: "green", isolated: true },
+  // Discovery static-analysis tools (discovery-stage.md §4, static column). Read-only
+  // source navigation — no target execution, so no blast radius. Like triage, they act
+  // on source with no target at all, hence isolated:true (they trivially satisfy
+  // target-isolation). The localizer (antares-localizer.md §3) drives its terminal loop
+  // ONLY through these: a search/enumeration command is code_search, a file read is
+  // code_read. Anything else the model emits is default-denied at the gate.
+  code_read:   { tier: "green", isolated: true },
+  code_search: { tier: "green", isolated: true },
 };
 
 // The default enforcing run scope: green tier, discovery tools only, sandbox

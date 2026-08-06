@@ -1,0 +1,11 @@
+{
+  "name": "localize",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Antares localizer slice: a mediated vulnerability-localization sub-agent for the discover stage (antares-localizer.md). Drives a backend's read-only source-navigation loop through the §6 gate, emits hypothesized Findings, confirms, and scores by File-F1.",
+  "scripts": {
+    "test": "node localize.test.mjs",
+    "run:h2h": "node run.mjs"
+  }
+}
