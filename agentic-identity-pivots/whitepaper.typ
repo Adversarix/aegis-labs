@@ -1,4 +1,4 @@
-#import "/typst/adversarix-whitepaper.typ": whitepaper, toc, callout, citation-block, navy, teal, gray-soft
+#import "/typst/aegis-whitepaper.typ": whitepaper, toc, callout, citation-block, navy, teal, gray-soft
 
 // Keep the cover subtitle from hyphenating ("Simula-tion"); the original
 // breaks cleanly before "Simulation".
