@@ -191,6 +191,22 @@ paper evaluates the platform's extractor against auto-derived CISA ground
 truth, while this harness compares backend LLMs on a hand-labeled seed corpus
 with its own scoring rules.
 
+### client-recon — Web Client Deception Detection
+
+[→ Browse the code](./client-recon/)
+
+A dependency-free detection-measurement harness that derives confidence-scored
+claims about a web client — spoofed self-report, headless/automation, hardened
+browser, datacenter origin — from a bundle of browser-side and edge-observed
+signals. It is the defensive inverse of a fingerprinting recon page: the same
+signals an attacker's landing page collects to profile a visitor are the ones a
+defender uses to catch a bot or a spoofed User-Agent. Its strongest detectors
+cross-check the client's story against what the edge actually saw (JS-UA vs
+wire-UA, browser timezone vs geo-IP, header shape vs a browser baseline), folds
+findings into an auditable score/verdict, and emits a JA4-adjacent transport
+fingerprint for clustering. Clean-room implementation of standard, publicly
+documented fingerprinting techniques.
+
 ---
 
 ## About AEGIS Labs

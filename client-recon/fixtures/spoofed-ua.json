@@ -1,0 +1,43 @@
+{
+  "client": {
+    "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
+    "uaMobile": true,
+    "uaPlatform": "Linux",
+    "platform": "Linux x86_64",
+    "webdriver": false,
+    "language": "ru-RU",
+    "languages": ["ru-RU", "ru"],
+    "maxTouchPoints": 0,
+    "hardwareConcurrency": 16,
+    "deviceMemory": 8,
+    "screenW": 1920,
+    "screenH": 1080,
+    "availW": 1920,
+    "availH": 1080,
+    "outerW": 1920,
+    "outerH": 1080,
+    "devicePixelRatio": 1,
+    "timezone": "Europe/Moscow",
+    "hasChromeObject": false,
+    "webglVendor": "Mesa",
+    "webglRenderer": "llvmpipe (LLVM 15.0.7, 256 bits)",
+    "notificationPermission": "default",
+    "permissionsNotification": "prompt",
+    "timerResolutionMs": 0,
+    "toStringNative": true
+  },
+  "edge": {
+    "ip": "192.0.2.55",
+    "country": "US",
+    "timezone": "America/Los_Angeles",
+    "asn": 14061,
+    "asOrganization": "DigitalOcean LLC",
+    "tlsVersion": "TLSv1.2",
+    "tlsCipher": "ECDHE-RSA-AES128-GCM-SHA256",
+    "tlsClientHelloLength": "280",
+    "httpProtocol": "HTTP/1.1",
+    "userAgent": "python-requests/2.31.0",
+    "acceptLanguage": "en-US,en;q=0.5",
+    "headerOrder": ["host", "user-agent", "accept-encoding", "accept"]
+  }
+}
