@@ -68,7 +68,11 @@ export async function detonateRun({
   } finally {
     // Invariant 3: teardown always; custody disarm -> back to inert.
     try { if (guest && !torn) { await substrate.teardown(guest); torn = true; } } catch {}
-    verdict.teardown_verified = !guest?.dir || !(await import("node:fs")).existsSync(guest.dir);
+    // Invariant 3, verified: ask the SUBSTRATE to confirm the guest is gone, so this
+    // holds on the real microVM substrate (a Firecracker guest has no `.dir`), not just
+    // the control-plane one. False on any substrate whose teardown did not take.
+    try { verdict.teardown_verified = guest ? await substrate.verifyTornDown(guest) : true; }
+    catch { verdict.teardown_verified = false; }
     try { if (armed) store.disarm(munitionId, { chamber_run_id: chamberRunId, reason: "run ended" }); } catch {}
     process.removeAllListeners("SIGTERM"); process.removeAllListeners("SIGINT");
   }

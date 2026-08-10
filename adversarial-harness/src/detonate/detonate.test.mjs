@@ -57,6 +57,14 @@ ok("real munition refused on non-isolating substrate", refused);
 // --- FirecrackerSubstrate declares hardware isolation (would accept real munitions) ---
 ok("FirecrackerSubstrate.isolates() is true", new FirecrackerSubstrate().isolates() === true);
 
+// --- teardown is verified by the SUBSTRATE, not a local guest.dir heuristic ---
+const vsub = new LocalHarnessSubstrate();
+const vguest = await vsub.provision("verify-1");
+ok("verifyTornDown() false while the guest is live", (await vsub.verifyTornDown(vguest)) === false);
+await vsub.teardown(vguest);
+ok("verifyTornDown() true after teardown", (await vsub.verifyTornDown(vguest)) === true);
+ok("FirecrackerSubstrate exposes verifyTornDown()", typeof new FirecrackerSubstrate().verifyTornDown === "function");
+
 // --- THE BUILD-FIRST EARLY-EXIT GATE: teardown guaranteed under a mid-detonation kill ---
 const killDir = mkdtempSync(join(tmpdir(), "detonate-kill-"));
 const guestFile = join(killDir, "guest.path");
