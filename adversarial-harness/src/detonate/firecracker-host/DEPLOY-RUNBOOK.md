@@ -168,27 +168,32 @@ console.log(passesBuildFirst(report));  // { capability, containment }
 
 ---
 
-## 4. Blocking code gaps (must close before this runbook fully passes)
+## 4. Committed-path code gaps (CLOSED by #61)
 
-These are in the committed code, not the host, and they are the real deploy work:
+These were in the committed code, not the host, and were the real deploy work. Both are closed by
+PR #61; the entries stay here as the record of what the committed path now does and what the
+real-host Phases D-F still validate.
 
-1. **`chamber-detonate.sh` live-fire is a stub.** It calls a placeholder `ssh-guest "$VMID" ...`
-   and carries `TODO(deploy): wire the guest agent transport (vsock) + the munition hand-off`.
-   As committed, live-fire cannot push a payload to the guest or read effect back. The 2026-08-03
-   run used ad-hoc SSH over a staged key wired to the tap. **Action:** implement the guest transport
-   (vsock preferred per the comment, or SSH-over-tap matching the ad-hoc run) and the munition
-   hand-off, so `--live` actually fires and returns `{effect, iocs}`.
+1. **`chamber-detonate.sh` live-fire transport - CLOSED.** It previously called a placeholder
+   `ssh-guest "$VMID" ...` with `TODO(deploy): wire the guest agent transport (vsock) + the munition
+   hand-off`, so live-fire could not push a payload or read effect back. It now uses the transport
+   the 2026-08-03 run validated: **SSH over the deception tap** to the guest's fixed air-gapped
+   address (`172.31.0.2`) with a staged host-side key (`setup-host.sh` generates it; the public half
+   is baked into the base rootfs in Phase B). `AEGIS_MUNITION` scps an armorer-armed munition in
+   (else the baked benign agent fires); `--dry-run` really probes reachability/sinkhole/marker; and
+   `--live` returns `{effect:{marker_fired}, iocs}` assembled from two independent signals (T0
+   sinkhole network log + in-guest auditd `shadow_read`).
 
-2. **`detonate.mjs:71` verifies teardown via `!guest?.dir`.** A `FirecrackerSubstrate` guest object
-   has `{ runId, vmid, socket, tap, sinkhole }` and **no `.dir`**, so `verdict.teardown_verified`
-   is unconditionally `true` on the real substrate - `passesBuildFirst` containment passes
-   vacuously without checking the host actually tore down. **Action:** have the orchestrator get
-   teardown confirmation from the substrate itself (e.g. a `substrate.verifyTornDown(guest)` that
-   checks the jail dir / firecracker process is gone on the host, mirroring the Phase D manual
-   checks) instead of the Local-only `guest.dir` heuristic.
+2. **Verified teardown - CLOSED.** `detonate.mjs` set `teardown_verified` from `!guest?.dir`, which
+   is unconditionally `true` for a Firecracker guest (no `.dir`), so `passesBuildFirst` containment
+   passed vacuously on the real substrate. Teardown verification is now delegated to the substrate:
+   `Substrate.verifyTornDown(guest)` - `LocalHarnessSubstrate` checks the guest dir is gone;
+   `FirecrackerSubstrate` runs the new `chamber-verify-teardown.sh`, which independently confirms the
+   microVM process, jail/overlay dir, tap, and egress chain are all gone on the host. `detonateRun`
+   awaits it (`false` on any substrate whose teardown did not take).
 
-Until #1 lands, Phase E cannot fire a real effect through the committed path. Until #2 lands, the
-Phase D/F containment gate is not actually asserting host teardown in the automated run.
+Verified by `detonate.test.mjs` (19/19, incl. the new `verifyTornDown` contract). Real-host Phases
+D-F still exercise this on the live KVM host.
 
 ---
 
