@@ -38,9 +38,18 @@ echo "[*] deception network (T0 sinkhole) + air-gap"
 # COUNTED, so assert-no-egress can prove zero real egress.
 sysctl -w net.ipv4.ip_forward=0 >/dev/null
 install -m0755 "$(dirname "$0")/sinkhole.py" "$CHAMBER/sinkhole.py" 2>/dev/null || true
-for s in chamber-provision chamber-detonate chamber-assert-no-egress chamber-teardown; do
+for s in chamber-provision chamber-detonate chamber-assert-no-egress chamber-teardown chamber-verify-teardown; do
   install -m0755 "$(dirname "$0")/$s.sh" "$CHAMBER/$s.sh"
 done
+
+echo "[*] guest transport key"
+# The host<->guest control channel (chamber-detonate.sh) is SSH over the deception
+# tap. Generate the host-side key once; its PUBLIC half must be baked into the base
+# rootfs authorized_keys (Phase B) so the guest accepts the chamber and nothing else.
+if [ ! -f "$CHAMBER/assets/guest_key" ]; then
+  ssh-keygen -t ed25519 -N "" -f "$CHAMBER/assets/guest_key" -C aegis-detonate-guest >/dev/null
+  echo "  NOTE: bake $CHAMBER/assets/guest_key.pub into the base rootfs (root authorized_keys)"
+fi
 
 echo "[*] done. Chamber at $CHAMBER (arch $ARCH). Place the kernel + clean rootfs, then the"
 echo "    FirecrackerSubstrate(mode='gcp-ssh', gcpInstance=...) can drive it."

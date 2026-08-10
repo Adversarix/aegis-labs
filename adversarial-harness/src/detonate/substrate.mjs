@@ -26,6 +26,10 @@ export class Substrate {
   async detonate(guest, opts) { throw new Error("not implemented"); }
   async assertNoEgress(guest) { throw new Error("not implemented"); }
   async teardown(guest) { throw new Error("not implemented"); }
+  // Independent post-teardown check: prove the guest is actually gone. The
+  // orchestrator asks the SUBSTRATE (not a local heuristic) so the containment
+  // verdict reflects real host state on every substrate.
+  async verifyTornDown(guest) { throw new Error("not implemented"); }
 }
 
 // ---------------------------------------------------------------------------
@@ -78,6 +82,9 @@ export class LocalHarnessSubstrate extends Substrate {
     if (guest?.dir && existsSync(guest.dir)) rmSync(guest.dir, { recursive: true, force: true });
     return { torn_down: true, exists: guest?.dir ? existsSync(guest.dir) : false };
   }
+
+  // Verified by the guest dir being gone (idempotent; true if never provisioned).
+  async verifyTornDown(guest) { return !guest?.dir || !existsSync(guest.dir); }
 }
 
 // ---------------------------------------------------------------------------
@@ -134,7 +141,13 @@ export class FirecrackerSubstrate extends Substrate {
     return JSON.parse(out.trim());  // { ok, real_egress }
   }
   async teardown(guest) {
-    const out = this._host(`sudo /srv/detonate/chamber-teardown.sh ${guest.vmid} || true`);
+    const out = this._host(`sudo /srv/detonate/chamber-teardown.sh ${guest.vmid} ${this.jailerRoot} || true`);
     return JSON.parse(out.trim() || '{"torn_down":true}');
+  }
+  async verifyTornDown(guest) {
+    if (!guest?.vmid) return true;   // never provisioned -> nothing to tear down
+    // Independent host check: microVM process, jail dir, tap, and egress chain all gone.
+    const out = this._host(`sudo /srv/detonate/chamber-verify-teardown.sh ${guest.vmid} ${this.jailerRoot}`);
+    return JSON.parse(out.trim()).torn_down === true;
   }
 }
