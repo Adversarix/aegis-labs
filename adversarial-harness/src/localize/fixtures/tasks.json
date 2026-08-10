@@ -1,6 +1,8 @@
 {
   "cwe_descriptions": {
-    "CWE-89": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection'). The application builds an SQL statement from externally influenced input without neutralizing special elements, letting an attacker alter the intended query."
+    "CWE-89": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection'). The application builds an SQL statement from externally influenced input without neutralizing special elements, letting an attacker alter the intended query.",
+    "CWE-78": "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection'). The application constructs an OS command from externally influenced input without neutralizing special elements, letting an attacker execute arbitrary commands.",
+    "CWE-22": "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal'). The application uses external input to build a pathname without neutralizing '..' sequences, allowing access to files outside the intended directory."
   },
   "targets": [
     { "id": "webapp-sqli", "dir": "fixtures/webapp", "cwe": "CWE-89",
@@ -8,6 +10,20 @@
       "entrypoints": { "models/user.py": { "call": "models.user:find_user_by_name", "kind": "sql-user-lookup" } } },
     { "id": "webapp-patched", "dir": "fixtures/webapp_patched", "cwe": "CWE-89",
       "ground_truth": { "location": [], "cwe": "CWE-89" },
-      "entrypoints": { "models/user.py": { "call": "models.user:find_user_by_name", "kind": "sql-user-lookup" } } }
+      "entrypoints": { "models/user.py": { "call": "models.user:find_user_by_name", "kind": "sql-user-lookup" } } },
+
+    { "id": "nettool-cmdi", "dir": "fixtures/nettool", "cwe": "CWE-78",
+      "ground_truth": { "location": ["checks.py"], "cwe": "CWE-78" },
+      "entrypoints": { "checks.py": { "call": "checks:ping_host", "kind": "cmd-exec" } } },
+    { "id": "nettool-patched", "dir": "fixtures/nettool_patched", "cwe": "CWE-78",
+      "ground_truth": { "location": [], "cwe": "CWE-78" },
+      "entrypoints": { "checks.py": { "call": "checks:ping_host", "kind": "cmd-exec" } } },
+
+    { "id": "fileserve-path", "dir": "fixtures/fileserve", "cwe": "CWE-22",
+      "ground_truth": { "location": ["storage.py"], "cwe": "CWE-22" },
+      "entrypoints": { "storage.py": { "call": "storage:read_document", "kind": "path-read" } } },
+    { "id": "fileserve-patched", "dir": "fixtures/fileserve_patched", "cwe": "CWE-22",
+      "ground_truth": { "location": [], "cwe": "CWE-22" },
+      "entrypoints": { "storage.py": { "call": "storage:read_document", "kind": "path-read" } } }
   ]
 }

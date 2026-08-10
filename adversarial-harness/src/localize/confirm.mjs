@@ -47,14 +47,22 @@ f = getattr(importlib.import_module("${modOf(call)}"), "${fnOf(call)}")
 try: out = str(f("127.0.0.1; echo AEGIS_INJECTED", 1))
 except Exception as e: out = "EXC " + str(e)
 print("VERDICT", "INJECTED" if "AEGIS_INJECTED" in out else "SAFE")` }),
-  // CWE-22: a traversal payload reads a file outside the base dir iff the path is unneutralized.
-  "path-read": (call) => ({ payload: "../../../../etc/hostname",
-    code: `import importlib, sys
+  // CWE-22: with a controlled document root, a "../" payload leaks a sentinel planted OUTSIDE
+  // the root iff the path is unneutralized; a benign in-root read succeeds in both cases.
+  "path-read": (call) => ({ payload: "../aegis_sentinel.txt",
+    code: `import os, importlib, sys
+os.makedirs("/tmp/store", exist_ok=True)
+open("/tmp/store/readme.txt", "w").write("hello")
+open("/tmp/aegis_sentinel.txt", "w").write("AEGIS_SECRET_LEAK")   # outside the doc root
+os.environ["DOCSTORE_DIR"] = "/tmp/store"                          # read at import by the fixture
 sys.path.insert(0, "/repo")
 f = getattr(importlib.import_module("${modOf(call)}"), "${fnOf(call)}")
-try: out = str(f("../../../../etc/hostname"))
-except Exception as e: out = "EXC " + str(e)
-print("VERDICT", "INJECTED" if (out and "EXC" not in out and out.strip()) else "SAFE")` }),
+def rd(n):
+    try: return str(f(n))
+    except Exception as e: return "EXC " + str(e)
+benign = rd("readme.txt")                 # inside root -> ok in both
+malicious = rd("../aegis_sentinel.txt")   # escapes root -> leak iff vulnerable
+print("VERDICT", "INJECTED" if ("AEGIS_SECRET_LEAK" in malicious and "AEGIS_SECRET_LEAK" not in benign) else "SAFE")` }),
 };
 
 // A sandboxed PoC runner: writes the harness to a temp file, executes it in a python image with

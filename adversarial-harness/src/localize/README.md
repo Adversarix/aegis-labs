@@ -29,8 +29,9 @@ only if the malicious input triggers the vulnerability the benign one does not �
 execution, not pattern matching. A confirmed Finding carries a `reproducer` (the §3 hinge to a
 proto-munition). A candidate with no entrypoint, or whose PoC does not trigger (e.g. a patched
 target), is `dismissed`. Confirm runs under its own `run_poc` scope, separate from the read-only
-localize loop — the loop can never execute, and confirm executes only in isolation. Harness kinds:
-`sql-user-lookup` (CWE-89, live-validated), `cmd-exec` (CWE-78), `path-read` (CWE-22).
+localize loop — the loop can never execute, and confirm executes only in isolation. Harness kinds
+(all live-validated, vulnerable + patched fixtures): `sql-user-lookup` (CWE-89), `cmd-exec`
+(CWE-78), `path-read` (CWE-22).
 
 ## Test (CI-safe, no model/Docker)
 
