@@ -20,6 +20,8 @@ export const PATHS = {
   operatorInstructions: join(ROOT_DIR, "operator", "agent-instructions.md"),
   sessionServer: join(ROOT_DIR, "develop", "session_server.py"),
   storeLib: join(ROOT_DIR, "munitions-store", "store.js"),
+  detonate: join(ROOT_DIR, "detonate", "detonate.mjs"),
+  detonateSubstrate: join(ROOT_DIR, "detonate", "substrate.mjs"),
 };
 
 const CONFIG_PATH = process.env.AEGIS_CONFIG || join(homedir(), ".config", "aegis", "config.json");

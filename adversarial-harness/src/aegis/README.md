@@ -26,6 +26,7 @@ aegis discover [opts]               run the discovery seam (fuzz + promote_findi
 aegis develop --target <t> [opts]   run the develop seam against a target
 aegis operator [opts]               run the operator cockpit (Goose drives hunt->custody on a real target)
 aegis store <list|show|verify|dispose> [args]   custody store (human path)
+aegis detonate --munition <id> --role <r> --actor <a> [opts]   red-tier chamber (human-gated)
 ```
 
 Run options (discover/develop/operator): `-t/--task`, `-i/--instructions`, `-s/--interactive`,
@@ -56,6 +57,12 @@ sandbox, not yet provisioned).
 - **The custody store**: `store list/show/verify` and, importantly, `store dispose` — the
   human-authorized op the harness cannot self-authorize. `dispose` requires `--role` and `--actor`,
   which the store library demands (`munitions-custody-policy.md` §6).
+- **The red-tier chamber**: `detonate` runs the detonation orchestrator (`detonate-stage.md`,
+  `DESIGN.md` §6.1) in-process, so the six chamber invariants are enforced in code on every fire. It
+  is human-gated exactly like `dispose` — arming a munition needs `--role`/`--actor` (the armorer),
+  never a Goose tool. `--substrate local` is the non-isolating control plane (benign only);
+  `--substrate firecracker` is the real microVM substrate. A `--real` munition is refused on any
+  non-isolating substrate (`NO_ISOLATION`).
 
 ## Examples
 
@@ -75,16 +82,23 @@ aegis operator --interactive         # drive the loop turn by turn
 aegis store list
 aegis store verify <id>
 aegis store dispose <id> --role custodian --actor alice --reason "study closed"
+# red-tier chamber (human-gated). Plan a run without firing:
+aegis detonate --munition <id> --role armorer --actor alice --dry-run
+# benign fire on the control-plane substrate (no host needed):
+aegis detonate --munition <id> --role armorer --actor alice
+# a REAL munition on the real microVM substrate over gcloud ssh:
+aegis detonate --munition <id> --role armorer --actor alice --real \
+  --substrate firecracker --mode gcp-ssh --gcp-instance crucible-fc-host
 ```
 
 ## Tests
 
 ```bash
-node aegis.test.mjs   # 32 tests: config, command construction, --binary arch check, target validation, operator wiring, store path
+node aegis.test.mjs   # 39 tests: config, command construction, --binary arch check, target validation, operator wiring, store path, detonate flow
 ```
 
 ## Not covered here (by design)
 
-`arm` / `export` and the red-tier detonate flow are not CLI commands yet — they attach to the
-detonation chamber and disclosure workflow, which do not exist. The store models and refuses them
-safely; `aegis` will grow those subcommands when red tier lands.
+`arm` / `export` are not standalone CLI commands: arming is driven only inside a chamber run
+(`detonate` arms and disarms the munition around the fire, bound to the chamber run), and export is
+gated behind the disclosure workflow. The store models and refuses these safely when unauthorized.

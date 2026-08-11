@@ -13,12 +13,13 @@ and, on a `deny` verdict, does not execute.
 
 [`aegis/`](./aegis/) is a thin CLI over Goose that packages the seam wiring, scope, keys, model
 selection, and the munitions store behind subcommands (`aegis develop --target ramp1
---interactive`, `aegis store dispose <id> --role custodian --actor alice`, `aegis doctor`). It does
-not fork Goose. See [`aegis/README.md`](./aegis/README.md).
+--interactive`, `aegis store dispose <id> --role custodian --actor alice`, `aegis detonate
+--munition <id> --role armorer --actor alice`, `aegis doctor`). It does not fork Goose. See
+[`aegis/README.md`](./aegis/README.md).
 
 ```bash
 node aegis/bin/aegis.js init && node aegis/bin/aegis.js doctor
-( cd aegis && node aegis.test.mjs )   # 26 CLI tests
+( cd aegis && node aegis.test.mjs )   # 39 CLI tests (incl. the detonate flow)
 ```
 
 ## Enforcing mediation seam
@@ -86,7 +87,7 @@ code-complete (`detonate/firecracker-host/`) and ready to deploy on the provisio
 [`detonate/FINDINGS-detonate-build-first.md`](./detonate/FINDINGS-detonate-build-first.md).
 
 ```bash
-( cd detonate && node detonate.test.mjs )   # 16 tests incl. teardown-under-kill
+( cd detonate && node detonate.test.mjs )   # 19 tests incl. teardown-under-kill + verifyTornDown
 ```
 
 ## Operator research cockpit (walking skeleton)
