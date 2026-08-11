@@ -1,0 +1,50 @@
+# Dependabot version updates + security bumps across the monorepo's ecosystems.
+# `directories` globs match every dir that actually holds a manifest, so new
+# components are picked up without editing this file. Minor + patch bumps are
+# grouped into one PR per ecosystem to keep the noise down; majors come solo.
+version: 2
+updates:
+  # npm: the seam/CLI/adapter/operator packages + client-recon.
+  - package-ecosystem: "npm"
+    directories:
+      - "/adversarial-harness/src/*"
+      - "/client-recon"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+    groups:
+      npm-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Python: the eval harnesses.
+  - package-ecosystem: "pip"
+    directories:
+      - "/exploitgym-eval"
+      - "/ttp-benchmark"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+    groups:
+      pip-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions used by the CI workflow(s).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        update-types:
+          - "minor"
+          - "patch"
