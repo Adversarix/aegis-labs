@@ -104,12 +104,28 @@ const disposed = aegis(["store", "dispose", m.id, "--role", "custodian", "--acto
 ok("store dispose with --role/--actor succeeds", disposed.status === 0 && /disposed/.test(disposed.out));
 ok("store verify still ok after disposal", /"ok": true/.test(aegis(["store", "verify", m.id]).out));
 
+// --- detonate: red-tier chamber, human-gated, wired into the CLI ---
+const md = store.create({ artifact: { reproducer_input_hex: "4242", recipe: "r", crash_report: "overflow" } });
+ok("detonate without --munition errors", aegis(["detonate"]).status === 1);
+const detNoAuthz = aegis(["detonate", "--munition", md.id]);
+ok("detonate without authorization is refused", detNoAuthz.status === 1 && /requires a human authorization/.test(detNoAuthz.out));
+const detPlan = aegis(["detonate", "--munition", md.id, "--role", "armorer", "--actor", "alice", "--dry-run"]);
+ok("detonate --dry-run prints the plan (control-plane, no fire)", detPlan.status === 0 && /detonate plan/.test(detPlan.out) && /control-plane/.test(detPlan.out));
+const detRealPlan = aegis(["detonate", "--munition", md.id, "--role", "armorer", "--actor", "alice", "--real", "--dry-run"]);
+ok("detonate --real --dry-run on local warns it would be refused (NO_ISOLATION)", /NO_ISOLATION/.test(detRealPlan.out));
+const detReal = aegis(["detonate", "--munition", md.id, "--role", "armorer", "--actor", "alice", "--real"]);
+ok("detonate --real on the control plane is refused", detReal.status === 1 && /isolating substrate/.test(detReal.out));
+const detFire = aegis(["detonate", "--munition", md.id, "--role", "armorer", "--actor", "alice"]);
+ok("benign detonate fires + passes the build-first gate",
+  detFire.status === 0 && /marker_fired=true/.test(detFire.out) && /capability=true\s+containment=true/.test(detFire.out));
+
 // --- doctor runs and reports ---
 ok("doctor runs and prints checks", /checks passed/.test(aegis(["doctor"]).out));
 
 // --- help ---
 ok("help lists subcommands", /aegis develop/.test(aegis(["help"]).out));
 ok("help lists the operator cockpit", /aegis operator/.test(aegis(["help"]).out));
+ok("help lists the detonate command", /aegis detonate/.test(aegis(["help"]).out));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);

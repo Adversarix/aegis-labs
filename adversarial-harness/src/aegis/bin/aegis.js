@@ -11,6 +11,7 @@ import { loadConfig, saveConfig, ensureInitialized, configPath } from "../lib/co
 import { buildRun, validTargets } from "../lib/goose.js";
 import { runChecks } from "../lib/doctor.js";
 import { storeCommand } from "../lib/store.js";
+import { detonateCommand } from "../lib/detonate.js";
 
 const [, , sub, ...rest] = process.argv;
 
@@ -25,6 +26,17 @@ Usage:
   aegis develop --target <t> [opts]   run the develop seam against a target
   aegis operator [opts]               run the operator cockpit (Goose drives hunt->custody on a real target)
   aegis store <list|show|verify|dispose> [args]   custody store (human path)
+  aegis detonate --munition <id> --role <r> --actor <a> [opts]   red-tier chamber (human-gated)
+
+Detonate options:
+      --substrate <s>      local (control-plane, benign only) | firecracker (real microVM). default local
+      --real               fire a REAL munition (requires an isolating substrate; default is benign)
+      --run <id>           chamber run id (default: generated)
+      --mode <m>           firecracker: local | gcp-ssh
+      --gcp-instance <n>   firecracker gcp-ssh: instance name
+      --gcp-zone <z>       firecracker gcp-ssh: zone (default us-east1-b)
+      --jailer-root <p>    firecracker: jail root (default /srv/detonate/jail)
+      --dry-run            print the plan instead of firing
 
 Run options (discover/develop):
   -t, --task <text>        one-shot instruction
@@ -71,6 +83,16 @@ function parseStoreArgs(argv) {
   return { id: positionals[0], ...values };
 }
 
+function parseDetonateArgs(argv) {
+  const { values } = parseArgs({ args: argv, options: {
+    munition: { type: "string" }, role: { type: "string" }, actor: { type: "string" },
+    substrate: { type: "string" }, real: { type: "boolean" }, run: { type: "string" },
+    mode: { type: "string" }, "gcp-instance": { type: "string" }, "gcp-zone": { type: "string" },
+    "jailer-root": { type: "string" }, "dry-run": { type: "boolean" },
+  }, allowPositionals: true });
+  return values;
+}
+
 async function main() {
   try {
     switch (sub) {
@@ -112,6 +134,10 @@ async function main() {
         console.log(await storeCommand(ensureInitialized(), ssub, parseStoreArgs(sargs)));
         return 0;
       }
+
+      case "detonate":
+        console.log(await detonateCommand(ensureInitialized(), parseDetonateArgs(rest)));
+        return 0;
 
       default:
         console.error(`unknown command '${sub}'\n`); console.error(HELP); return 2;
