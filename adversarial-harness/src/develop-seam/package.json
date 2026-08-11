@@ -6,6 +6,6 @@
   "description": "Develop-stage MCP seam: persistent-container exploit-dev tools (debug IAT, pattern, gadget, build_exploit) behind the enforcing mediation gate.",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "zod": "^3.23.0"
+    "zod": "^4.4.3"
   }
 }
