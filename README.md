@@ -63,7 +63,7 @@ from disclosure to advisory in under 90 seconds.
 ---
 
 ### Agentic Identity Pivots: Modeling Credential-Borne Lateral Movement in Breach Simulation
-**July 2026 · Version 1.1**
+**August 2026 · Version 1.2**
 
 [→ Download PDF](./agentic-identity-pivots/AEGIS_Agentic_Identity_Pivots_Whitepaper.pdf)
 
@@ -73,14 +73,16 @@ lateral-movement surface. Most threat models represent credential abuse only as 
 label, which cannot express how far a compromise actually spreads. This paper describes how
 Adversarix adds an agent–credential–tool topology to the Threat Knowledge Graph and makes
 the Monte Carlo breach simulation *traverse* it, so agentic lateral movement becomes a real,
-quantified term in breach probability.
+quantified term in breach probability. Version 1.2 grounds the model against a live Microsoft
+Entra ID estate, which corrected its central assumption about where the traversable pivot lives.
 
 **Key findings:**
-- Pivot-success probability is governed by credential *posture*, not technique label: a static shared key scores 0.90, a delegation-attenuated token 0.20, a 4.5× spread a technique-only model collapses
+- Grounding against a real Entra tenant corrected the model: the traversable agentic pivot is credential-management *authority*, not credential *ownership*. A literal credential-to-principal mapping yields only self-loops and zero pivots; the real lateral surface is role-based (a principal holding Application Administrator or a peer role can mint a secret on any application and act as it)
+- Pivot-success probability is governed by credential *posture*, not technique label: a static shared key scores 0.90, a delegation-attenuated token 0.20, a 4.5× spread a technique-only model collapses. The four posture classes bind to observable Entra credential attributes
 - A unified heterogeneous walk lets a single attack path interleave technique steps and credential pivots, with detection applied to pivots via the technique they realize
 - A structural regression lock guarantees the model is purely additive: estates with no identity topology reproduce the prior breach probability exactly
 
-**Topics:** agentic AI threat modeling · credential posture priors · MCP/tool reachability · heterogeneous graph traversal · bounded path explosion · regression-locked risk scoring
+**Topics:** agentic AI threat modeling · Entra ID identity grounding · credential posture priors · MCP/tool reachability · heterogeneous graph traversal · bounded path explosion · regression-locked risk scoring
 
 ---
 
