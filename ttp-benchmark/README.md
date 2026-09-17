@@ -59,15 +59,18 @@ Output:
 - every raw model response under `results/raw/<model>/<report>.json` (so reruns
   are free and you can eyeball *why* a model scored the way it did)
 
-### Results (seed corpus snapshot, 2026-07-28)
+### Results (seed corpus snapshot, 2026-07-28; local + proprietary Qwen added 2026-08-17)
 
-A run over the 20-report seed corpus (K3 and DeepSeek reasoning-minimal):
+A run over the 20-report seed corpus (K3 and DeepSeek reasoning-minimal; local
+`qwen3.8:27b` served on-box via Ollama with thinking disabled, so 0 API cost):
 
 | model | F1(strict) | F1(parent) | P | R | refusals/errs | median s | cost $/run | $/report |
 |---|---|---|---|---|---|---|---|---|
 | kimi-k3-fireworks | 0.927 | 0.932 | 0.912 | 0.942 | 0/20 | 7.1 | 0.133 | 0.0067 |
 | claude-opus-4-8 | 0.906 | 0.927 | 0.895 | 0.917 | 1/20 | 4.7 | 0.262 | 0.0131 |
 | deepseek-v4-pro | 0.844 | 0.907 | 0.862 | 0.826 | 0/20 | 3.9 | 0.027 | 0.0014 |
+| qwen3.8-27b-ollama | 0.764 | 0.838 | 0.795 | 0.736 | 1/20 | 347.4 | 0 | 0 |
+| qwen3-max | 0.631 | 0.730 | 0.633 | 0.628 | 0/20 | 6.0 | 0.029 | 0.0014 |
 
 Read these as directional, not definitive. What drives the ranking:
 
@@ -83,6 +86,15 @@ Read these as directional, not definitive. What drives the ranking:
   techniques. Its parent F1 (0.907) is well above strict, so more of its errors
   are wrong-sub-technique near-misses; it closes much of the gap if you only need
   technique-level granularity downstream.
+- **Open-weight Qwen beats the proprietary Qwen flagship on this task.** Local
+  `qwen3.8:27b` (open-weight, run on-box via Ollama) scores 0.764 F1 at zero API
+  cost, well clear of the proprietary `qwen3-max` API (0.631, last in the field
+  and recall-limited at 0.628). The catch is throughput, not quality: the local
+  model runs on the Mac's 48GB unified memory at a 347s median per report and
+  one report hit the 30-minute client timeout and returned nothing (the single
+  error in its row), roughly 50-70x slower than the hosted models. Read it as a
+  free, offline-capable option for batch or air-gapped extraction, not for
+  latency-sensitive work.
 - Both Fireworks-served models show occasional serverless latency spikes (K3 to
   95s, DeepSeek to 32s) that the median hides; Claude (different infra) stayed
   tight.
