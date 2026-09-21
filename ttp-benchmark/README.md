@@ -2,8 +2,10 @@
 
 A model-agnostic test harness that measures how well different LLMs extract
 **MITRE ATT&CK TTPs** from threat-intelligence reports. Built to compare
-**Kimi K3 (Fireworks)** vs **Claude (Anthropic)** vs **Qwen (DashScope)** — and
-anything else you add to `config.yaml`.
+**Kimi K3 (Fireworks)**, **Claude (Anthropic)**, **DeepSeek**, and
+**Qwen (DashScope)**, plus **Jev (TypeSafe)**, a calibrated System One model of a
+different class (see [System One model](#system-one-model-jev-calibrated-classification)),
+and anything else you add to `config.yaml`.
 
 Part of [AEGIS Labs](https://github.com/Adversarix/aegis-labs), the open
 research home of Adversarix: TTP extraction is the ingestion step that feeds the
@@ -43,6 +45,10 @@ You only need keys for the models you want to run.
   `config.yaml`). A Moonshot-direct route is included commented-out for anyone
   with a `MOONSHOT_API_KEY` instead.
 - **Qwen** — `DASHSCOPE_API_KEY`.
+- **Jev (TypeSafe)** needs `TYPESAFE_API_KEY`. It is a System One model at
+  `https://api.typesafe.ai/v1` (already in `config.yaml`) and uses the shipped
+  candidate file `data/candidates_corpus.json`. Run it with
+  `--models jev-typesafe`.
 
 ## Run
 
@@ -178,6 +184,56 @@ The 25 CISA reports sliced by type (strict F1, recall in parens):
 Per-category n is small (8/9/4/4); ransomware and APT are the reliable slices,
 red-team and other (n=4) are suggestive only.
 
+### System One model (Jev): calibrated classification
+
+Beyond the generative LLMs, the harness includes **Jev** (TypeSafe,
+`provider: typesafe`), a System One model that returns typed decisions with
+probabilities instead of text. It cannot enumerate, so extraction is reframed as
+a **Noul sweep**: the report is the model state and it answers one "is technique X
+present?" boolean per candidate technique (the 280-technique gold union in
+`data/candidates_corpus.json`), keeping those above a probability threshold.
+Because it is handed the candidate set, its precision is a closed-world
+classification score, not directly comparable to the open-vocabulary LLMs.
+
+On the real CISA advisories (threshold 0.5) Jev matches Claude's F1 (0.51) with
+the highest recall of any model (0.80), at about 1/30 the cost ($0.07 vs $2.30
+per 25 reports) and 15x the speed (1.5s median), with zero refusals. It
+over-predicts on the synthetic seed corpus (0.47 F1).
+
+Its confidence looks miscalibrated against the raw CISA tables (ECE 0.119), but
+that is mostly label incompleteness. A blinded LLM-judge pass
+(`adjudicate_jev_fp.py`, judge = Claude, not Jev) finds **70% of Jev's
+high-confidence false positives are real, untabled techniques** (effective
+precision at the 0.9 gate about 88%). Adjudicating the full candidate pool
+(`emit_adjudicated_cisa.py`) adds **580 techniques to 635 table labels** and,
+re-scored on corrected gold, lifts every model's precision from ~0.50 to
+~0.75-0.80:
+
+| model (CISA, adjudicated gold) | P | F1(strict) | F1(parent) |
+|---|---|---|---|
+| claude-opus-4-8 | 0.79 | 0.58 | 0.72 |
+| kimi-k3-fireworks | 0.80 | 0.52 | 0.67 |
+| deepseek-v4-pro | 0.75 | 0.39 | 0.55 |
+| qwen3-max | 0.71 | 0.34 | 0.47 |
+| jev-typesafe (thr 0.5) | 0.72 | 0.76 | 0.78 |
+
+Jev tops F1 here, but that lead is inflated by pool construction: 22% of the
+adjudicated gold was surfaced only by Jev, which counts as a miss for the others.
+Precision is immune to that bias, and Jev is tunable across its threshold (P 0.72
+at 0.5, 0.805 at 0.7 matching the frontier models, 0.895 at 0.9); even at the
+precision-matched 0.7 it still leads on F1 by out-recalling the LLMs. The judge
+was validated (100% quote grounding, 0/75 negative controls accepted; parent-level
+verdicts solid, ~20-30% of sub-technique calls debatable). Full write-up in
+`jev-systemone-eval.md`. Reproduce:
+
+```bash
+python run_benchmark.py --models jev-typesafe --corpus data/corpus_cisa.jsonl
+python analyze_calibration.py                              # Brier / ECE / threshold sweep
+python adjudicate_jev_fp.py --threshold 0.9               # high-confidence FP adjudication
+python emit_adjudicated_cisa.py --judge claude-opus-4-8   # build corrected gold
+python run_benchmark.py --corpus data/corpus_cisa_adjudicated.jsonl  # re-score all models
+```
+
 ### Per-report drill-down
 
 After the summary table, the harness prints exactly what each model got wrong
@@ -204,10 +260,16 @@ on every report:
 run_benchmark.py          orchestrate: run each model over the corpus, score, tabulate
 config.yaml               models under test (+ endpoints, prices)
 data/corpus.jsonl         threat-intel reports with gold ATT&CK labels
+data/candidates_corpus.json         280-technique candidate set for the Jev Noul sweep
+data/corpus_cisa_adjudicated.jsonl  CISA gold corrected for table incompleteness
+analyze_calibration.py    Brier / ECE / reliability + threshold sweep (Jev noul probs)
+adjudicate_jev_fp.py      blinded LLM-judge over Jev's high-confidence false positives
+emit_adjudicated_cisa.py  build corrected CISA gold from the full candidate pool
+jev-systemone-eval.md     the System One (Jev) evaluation note
 harness/
   prompts.py              the single shared extraction prompt (identical for every model)
   schema.py               shared output JSON schema + pydantic model
-  providers.py            AnthropicProvider (official SDK) + OpenAICompatibleProvider (Kimi/Qwen)
+  providers.py            AnthropicProvider + OpenAICompatibleProvider (Kimi/Qwen) + TypeSafeProvider (Jev)
   evaluate.py             precision / recall / F1, strict + parent-level
 ```
 
