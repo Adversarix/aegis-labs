@@ -182,10 +182,149 @@ class OpenAICompatibleProvider:
             )
 
 
+# ---------------------------------------------------------------------------
+# TypeSafe (Jev) — System One model, decisions not text
+# ---------------------------------------------------------------------------
+
+class TypeSafeProvider:
+    """Adapter for TypeSafe's Jev via POST /v1/systemone.
+
+    Jev doesn't generate a technique list — it answers typed questions over a
+    fixed answer space. So TTP extraction is reframed as a *Noul sweep*: the
+    report is the `state`, and we ask one Noul ("does this report describe
+    technique X?") per candidate technique, keeping those whose probability
+    clears `threshold`. Candidates come from `candidates_file` (an
+    id -> {name, desc} map). Questions are batched across requests because a
+    full sweep is a few hundred Nouls per report.
+
+    Two asymmetries vs the generative providers, by construction:
+      * closed-world — Jev is handed the candidate label space; the LLMs
+        discover techniques from the open ATT&CK vocabulary. This inflates
+        Jev's precision relative to open extraction, so read it as a
+        multi-label classification score, not a like-for-like extraction score.
+      * every Noul probability (positives AND negatives) is stashed in
+        raw_text as JSON so calibration (ECE/Brier) can be computed later.
+    """
+
+    def __init__(self, cfg: dict):
+        import httpx  # lazy import so the dep stays optional
+
+        self.cfg = cfg
+        self.key = cfg["key"]
+        self.model = cfg.get("model", "jev-latest")
+        self.threshold = float(cfg.get("threshold", 0.5))
+        self.batch_size = int(cfg.get("batch_size", 40))
+
+        api_key = os.environ.get(cfg.get("api_key_env", "TYPESAFE_API_KEY"), "").strip()
+        base_url = (
+            os.environ.get(cfg.get("base_url_env", "TYPESAFE_BASE_URL"), "")
+            or cfg.get("base_url_default", "https://api.typesafe.ai/v1")
+        )
+        if not api_key:
+            raise RuntimeError(
+                f"missing API key env {cfg.get('api_key_env', 'TYPESAFE_API_KEY')!r} for model {self.key}"
+            )
+
+        cand_path = cfg.get("candidates_file")
+        if not cand_path:
+            raise RuntimeError(f"typesafe provider {self.key} needs a candidates_file in config")
+        cand_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), cand_path)
+        with open(cand_path) as fh:
+            self.candidates: dict[str, dict] = json.load(fh)
+
+        self.endpoint = base_url.rstrip("/") + "/systemone"
+        self.client = httpx.Client(
+            base_url="",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            timeout=httpx.Timeout(90.0),
+        )
+
+    def _noul_question(self, tid: str, meta: dict) -> dict:
+        name = meta.get("name") or tid
+        desc = meta.get("desc") or ""
+        q = {
+            "type": "noul",
+            "instructions": (
+                f"Does this threat-intelligence report describe the adversary using the "
+                f"technique '{name}' (MITRE ATT&CK {tid})?"
+            ),
+        }
+        if desc:
+            q["criteria"] = {"true": desc, "false": "The report does not describe this behavior."}
+        return q
+
+    def extract(self, report_text: str) -> ExtractionResult:
+        t0 = time.perf_counter()
+        ids = list(self.candidates)
+        # stable q-key <-> technique-id map so ids with dots aren't a problem
+        keymap = {f"q{i}": tid for i, tid in enumerate(ids)}
+        nouls: dict[str, float] = {}
+        in_tok = out_tok = 0
+        try:
+            items = list(keymap.items())
+            for start in range(0, len(items), self.batch_size):
+                chunk = items[start : start + self.batch_size]
+                questions = {qk: self._noul_question(tid, self.candidates[tid]) for qk, tid in chunk}
+                payload = {"model": self.model, "state": report_text, "questions": questions}
+                resp = self._post_with_retry(payload)
+                data = resp.json()
+                answers = data.get("answers", {}) or {}
+                for qk, ans in answers.items():
+                    tid = keymap.get(qk)
+                    if tid is not None and isinstance(ans, dict) and "noul" in ans:
+                        nouls[tid] = float(ans["noul"])
+                usage = data.get("usage", {}) or {}
+                in_tok += int(usage.get("input_tokens", 0) or 0)
+                out_tok += int(usage.get("output_tokens", 0) or 0)
+
+            techniques = [
+                {"technique_id": tid, "name": self.candidates[tid].get("name", ""),
+                 "evidence": "", "noul": p}
+                for tid, p in sorted(nouls.items(), key=lambda kv: -kv[1])
+                if p >= self.threshold
+            ]
+            return ExtractionResult(
+                model_key=self.key,
+                techniques=techniques,
+                # full sweep (positives + negatives) preserved for calibration analysis
+                raw_text=json.dumps({"nouls": nouls, "threshold": self.threshold}),
+                input_tokens=in_tok,
+                output_tokens=out_tok,
+                latency_s=time.perf_counter() - t0,
+            )
+        except Exception as e:  # noqa: BLE001 - record, don't crash the run
+            return ExtractionResult(
+                model_key=self.key, input_tokens=in_tok, output_tokens=out_tok,
+                latency_s=time.perf_counter() - t0, error=f"{type(e).__name__}: {e}",
+            )
+
+    def _post_with_retry(self, payload: dict, retries: int = 2):
+        import httpx
+
+        last = None
+        for attempt in range(retries + 1):
+            try:
+                resp = self.client.post(self.endpoint, json=payload)
+                if resp.status_code >= 500 and attempt < retries:
+                    time.sleep(1.5 * (attempt + 1))
+                    continue
+                resp.raise_for_status()
+                return resp
+            except httpx.HTTPError as e:
+                last = e
+                if attempt < retries:
+                    time.sleep(1.5 * (attempt + 1))
+                    continue
+                raise
+        raise last  # unreachable, but keeps type-checkers happy
+
+
 def build_provider(cfg: dict):
     kind = cfg["provider"]
     if kind == "anthropic":
         return AnthropicProvider(cfg)
     if kind == "openai_compatible":
         return OpenAICompatibleProvider(cfg)
+    if kind == "typesafe":
+        return TypeSafeProvider(cfg)
     raise ValueError(f"unknown provider {kind!r} for model {cfg.get('key')!r}")

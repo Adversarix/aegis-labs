@@ -1,0 +1,1122 @@
+{
+  "T1001.003": {
+    "name": "Protocol or Service Impersonation",
+    "desc": "Adversaries may impersonate legitimate protocols or web service traffic to disguise command and control activity and thwart analysis efforts. By impersonating legitimate protocols or web services, adversaries can make their command and cont"
+  },
+  "T1003": {
+    "name": "OS Credential Dumping",
+    "desc": "Adversaries may attempt to dump credentials to obtain account login and credential material, normally in the form of a hash or a clear text password. Credentials can be obtained from OS caches, memory, or structures.(Citation: Brining MimiK"
+  },
+  "T1003.001": {
+    "name": "LSASS Memory",
+    "desc": "Adversaries may attempt to access credential material stored in the process memory of the Local Security Authority Subsystem Service (LSASS). After a user logs on, the system generates and stores a variety of credential materials in LSASS p"
+  },
+  "T1003.002": {
+    "name": "Security Account Manager",
+    "desc": "Adversaries may attempt to extract credential material from the Security Account Manager (SAM) database either through in-memory techniques or through the Windows Registry where the SAM database is stored. The SAM is a database file that co"
+  },
+  "T1003.003": {
+    "name": "NTDS",
+    "desc": "Adversaries may attempt to access or create a copy of the Active Directory domain database in order to steal credential information, as well as obtain other information about domain members such as devices, users, and access rights. By defa"
+  },
+  "T1003.005": {
+    "name": "Cached Domain Credentials",
+    "desc": "Adversaries may attempt to access cached domain credentials used to allow authentication to occur in the event a domain controller is unavailable.(Citation: Microsoft - Cached Creds)"
+  },
+  "T1003.006": {
+    "name": "DCSync",
+    "desc": "Adversaries may attempt to access credentials and other sensitive information by abusing a Windows Domain Controller's application programming interface (API)(Citation: Microsoft DRSR Dec 2017) (Citation: Microsoft GetNCCChanges) (Citation:"
+  },
+  "T1005": {
+    "name": "Data from Local System",
+    "desc": "Adversaries may search local system sources, such as file systems, configuration files, local databases, virtual machine files, or process memory, to find files of interest and sensitive data prior to Exfiltration."
+  },
+  "T1007": {
+    "name": "System Service Discovery",
+    "desc": "Adversaries may try to gather information about registered local system services. Adversaries may obtain information about services using tools as well as OS utility commands such as <code>sc query</code>, <code>tasklist /svc</code>, <code>"
+  },
+  "T1012": {
+    "name": "Query Registry",
+    "desc": "Adversaries may interact with the Windows Registry to gather information about the system, configuration, and installed software."
+  },
+  "T1016": {
+    "name": "System Network Configuration Discovery",
+    "desc": "Adversaries may look for details about the network configuration and settings, such as IP and/or MAC addresses, of systems they access or through information discovery of remote systems. Several operating system administration utilities exi"
+  },
+  "T1018": {
+    "name": "Remote System Discovery",
+    "desc": "Adversaries may attempt to get a listing of other systems by IP address, hostname, or other logical identifier on a network that may be used for Lateral Movement from the current system. Functionality could exist within remote access tools "
+  },
+  "T1021": {
+    "name": "Remote Services",
+    "desc": "Adversaries may use [Valid Accounts](https://attack.mitre.org/techniques/T1078) to log into a service that accepts remote connections, such as telnet, SSH, and VNC. The adversary may then perform actions as the logged-on user."
+  },
+  "T1021.001": {
+    "name": "Remote Desktop Protocol",
+    "desc": "Adversaries may use [Valid Accounts](https://attack.mitre.org/techniques/T1078) to log into a computer using the Remote Desktop Protocol (RDP). The adversary may then perform actions as the logged-on user."
+  },
+  "T1021.002": {
+    "name": "SMB/Windows Admin Shares",
+    "desc": "Adversaries may use [Valid Accounts](https://attack.mitre.org/techniques/T1078) to interact with a remote network share using Server Message Block (SMB). The adversary may then perform actions as the logged-on user."
+  },
+  "T1021.004": {
+    "name": "SSH",
+    "desc": "Adversaries may use [Valid Accounts](https://attack.mitre.org/techniques/T1078) to log into remote machines using Secure Shell (SSH). The adversary may then perform actions as the logged-on user."
+  },
+  "T1021.005": {
+    "name": "VNC",
+    "desc": "Adversaries may use [Valid Accounts](https://attack.mitre.org/techniques/T1078) to remotely control machines using Virtual Network Computing (VNC).  VNC is a platform-independent desktop sharing system that uses the RFB (\u201cremote framebuffer"
+  },
+  "T1021.006": {
+    "name": "Windows Remote Management",
+    "desc": "Adversaries may use [Valid Accounts](https://attack.mitre.org/techniques/T1078) to interact with remote systems using Windows Remote Management (WinRM). The adversary may then perform actions as the logged-on user."
+  },
+  "T1027": {
+    "name": "Obfuscated Files or Information",
+    "desc": "Adversaries may attempt to make an executable or file difficult to discover or analyze by encrypting, encoding, or otherwise obfuscating its contents on the system or in transit. This is common behavior that can be used across different pla"
+  },
+  "T1027.001": {
+    "name": "Binary Padding",
+    "desc": "Adversaries may use binary padding to add junk data and change the on-disk representation of malware. This can be done without affecting the functionality or behavior of a binary, but can increase the size of the binary beyond what some sec"
+  },
+  "T1027.002": {
+    "name": "Software Packing",
+    "desc": "Adversaries may perform software packing or virtual machine software protection to conceal their code. Software packing is a method of compressing or encrypting an executable. Packing an executable changes the file signature in an attempt t"
+  },
+  "T1027.009": {
+    "name": "Embedded Payloads",
+    "desc": "Adversaries may embed payloads within other files to conceal malicious content from defenses. Otherwise seemingly benign files (such as scripts and executables) may be abused to carry and obfuscate malicious payloads and content. In some ca"
+  },
+  "T1027.010": {
+    "name": "Command Obfuscation",
+    "desc": "Adversaries may obfuscate content during command execution to impede detection. Command-line obfuscation is a method of making strings and patterns within commands and scripts more difficult to signature and analyze. This type of obfuscatio"
+  },
+  "T1027.013": {
+    "name": "Encrypted/Encoded File",
+    "desc": "Adversaries may encrypt or encode files to obfuscate strings, bytes, and other specific patterns to impede detection. Encrypting and/or encoding file content aims to conceal malicious artifacts within a file used in an intrusion. Many other"
+  },
+  "T1027.015": {
+    "name": "Compression",
+    "desc": "Adversaries may use compression to obfuscate their payloads or files. Compressed file formats such as ZIP, gzip, 7z, and RAR can compress and archive multiple files together to make it easier and faster to transfer files. In addition to com"
+  },
+  "T1027.017": {
+    "name": "SVG Smuggling",
+    "desc": "Adversaries may smuggle data and files past content filters by hiding malicious payloads inside of seemingly benign SVG files.(Citation: Trustwave SVG Smuggling 2025) SVGs, or Scalable Vector Graphics, are vector-based image files construct"
+  },
+  "T1029": {
+    "name": "Scheduled Transfer",
+    "desc": "Adversaries may schedule data exfiltration to be performed only at certain times of day or at certain intervals. This could be done to blend traffic patterns with normal activity or availability."
+  },
+  "T1033": {
+    "name": "System Owner/User Discovery",
+    "desc": "Adversaries may attempt to identify the primary user, currently logged in user, set of users that commonly uses a system, or whether a user is actively using the system. They may do this, for example, by retrieving account usernames or by u"
+  },
+  "T1036": {
+    "name": "Masquerading",
+    "desc": "Adversaries may attempt to manipulate features of their artifacts to make them appear legitimate or benign to users and/or security tools. Masquerading occurs when the name or location of an object, legitimate or malicious, is manipulated o"
+  },
+  "T1036.004": {
+    "name": "Masquerade Task or Service",
+    "desc": "Adversaries may attempt to manipulate the name of a task or service to make it appear legitimate or benign. Tasks/services executed by the Task Scheduler or systemd will typically be given a name and/or description.(Citation: TechNet Schtas"
+  },
+  "T1036.005": {
+    "name": "Match Legitimate Resource Name or Location",
+    "desc": "Adversaries may match or approximate the name or location of legitimate files, Registry keys, or other resources when naming/placing them. This is done for the sake of evading defenses and observation. "
+  },
+  "T1037": {
+    "name": "Boot or Logon Initialization Scripts",
+    "desc": "Adversaries may use scripts automatically executed at boot or logon initialization to establish persistence.(Citation: Mandiant APT29 Eye Spy Email Nov 22)(Citation: Anomali Rocke March 2019) Initialization scripts can be used to perform ad"
+  },
+  "T1037.003": {
+    "name": "Network Logon Script",
+    "desc": "Adversaries may use network logon scripts automatically executed at logon initialization to establish persistence. Network logon scripts can be assigned using Active Directory or Group Policy Objects.(Citation: Petri Logon Script AD) These "
+  },
+  "T1039": {
+    "name": "Data from Network Shared Drive",
+    "desc": "Adversaries may search network shares on computers they have compromised to find files of interest. Sensitive data can be collected from remote systems via shared network drives (host shared directory, network file server, etc.) that are ac"
+  },
+  "T1040": {
+    "name": "Network Sniffing",
+    "desc": "Adversaries may passively sniff network traffic to capture information about an environment, including authentication material passed over the network. Network sniffing refers to using the network interface on a system to monitor or capture"
+  },
+  "T1041": {
+    "name": "Exfiltration Over C2 Channel",
+    "desc": "Adversaries may steal data by exfiltrating it over an existing command and control channel. Stolen data is encoded into the normal communications channel using the same protocol as command and control communications."
+  },
+  "T1046": {
+    "name": "Network Service Discovery",
+    "desc": "Adversaries may attempt to get a listing of services running on remote hosts and local network infrastructure devices, including those that may be vulnerable to remote software exploitation. Common methods to acquire this information includ"
+  },
+  "T1047": {
+    "name": "Windows Management Instrumentation",
+    "desc": "Adversaries may abuse Windows Management Instrumentation (WMI) to execute malicious commands and payloads. WMI is designed for programmers and is the infrastructure for management data and operations on Windows systems.(Citation: WMI 1-3) W"
+  },
+  "T1048": {
+    "name": "Exfiltration Over Alternative Protocol",
+    "desc": "Adversaries may steal data by exfiltrating it over a different protocol than that of the existing command and control channel. The data may also be sent to an alternate network location from the main command and control server.  "
+  },
+  "T1048.002": {
+    "name": "Exfiltration Over Asymmetric Encrypted Non-C2 Protocol",
+    "desc": "Adversaries may steal data by exfiltrating it over an asymmetrically encrypted network protocol other than that of the existing command and control channel. The data may also be sent to an alternate network location from the main command an"
+  },
+  "T1048.003": {
+    "name": "Exfiltration Over Unencrypted Non-C2 Protocol",
+    "desc": "Adversaries may steal data by exfiltrating it over an un-encrypted network protocol other than that of the existing command and control channel. The data may also be sent to an alternate network location from the main command and control se"
+  },
+  "T1049": {
+    "name": "System Network Connections Discovery",
+    "desc": "Adversaries may attempt to get a listing of network connections to or from the compromised system they are currently accessing or from remote systems by querying for information over the network. "
+  },
+  "T1052.001": {
+    "name": "Exfiltration over USB",
+    "desc": "Adversaries may attempt to exfiltrate data over a USB connected physical device. In certain circumstances, such as an air-gapped network compromise, exfiltration could occur via a USB device introduced by a user. The USB device could be use"
+  },
+  "T1053": {
+    "name": "Scheduled Task/Job",
+    "desc": "Adversaries may abuse task scheduling functionality to facilitate initial or recurring execution of malicious code. Utilities exist within all major operating systems to schedule programs or scripts to be executed at a specified date and ti"
+  },
+  "T1053.002": {
+    "name": "At",
+    "desc": "Adversaries may abuse the [at](https://attack.mitre.org/software/S0110) utility to perform task scheduling for initial or recurring execution of malicious code. The [at](https://attack.mitre.org/software/S0110) utility exists as an executab"
+  },
+  "T1053.003": {
+    "name": "Cron",
+    "desc": "Adversaries may abuse the <code>cron</code> utility to perform task scheduling for initial or recurring execution of malicious code.(Citation: 20 macOS Common Tools and Techniques) The <code>cron</code> utility is a time-based job scheduler"
+  },
+  "T1053.005": {
+    "name": "Scheduled Task",
+    "desc": "Adversaries may abuse the Windows Task Scheduler to perform task scheduling for initial or recurring execution of malicious code. There are multiple ways to access the Task Scheduler in Windows. The [schtasks](https://attack.mitre.org/softw"
+  },
+  "T1055": {
+    "name": "Process Injection",
+    "desc": "Adversaries may inject code into processes in order to evade process-based defenses as well as possibly elevate privileges. Process injection is a method of executing arbitrary code in the address space of a separate live process. Running c"
+  },
+  "T1055.002": {
+    "name": "Portable Executable Injection",
+    "desc": "Adversaries may inject portable executables (PE) into processes in order to evade process-based defenses as well as possibly elevate privileges. PE injection is a method of executing arbitrary code in the address space of a separate live pr"
+  },
+  "T1055.004": {
+    "name": "Asynchronous Procedure Call",
+    "desc": "Adversaries may inject malicious code into processes via the asynchronous procedure call (APC) queue in order to evade process-based defenses as well as possibly elevate privileges. APC injection is a method of executing arbitrary code in t"
+  },
+  "T1056": {
+    "name": "Input Capture",
+    "desc": "Adversaries may use methods of capturing user input to obtain credentials or collect information. During normal system usage, users often provide credentials to various different locations, such as login pages/portals or system dialog boxes"
+  },
+  "T1056.001": {
+    "name": "Keylogging",
+    "desc": "Adversaries may log user keystrokes to intercept credentials as the user types them. Keylogging is likely to be used to acquire credentials for new access opportunities when [OS Credential Dumping](https://attack.mitre.org/techniques/T1003)"
+  },
+  "T1056.002": {
+    "name": "GUI Input Capture",
+    "desc": "Adversaries may mimic common operating system GUI components to prompt users for credentials with a seemingly legitimate prompt. When programs are executed that need additional privileges than are present in the current user context, it is "
+  },
+  "T1057": {
+    "name": "Process Discovery",
+    "desc": "Adversaries may attempt to get information about running processes on a system. Information obtained could be used to gain an understanding of common software/applications running on systems within the network. Administrator or otherwise el"
+  },
+  "T1059": {
+    "name": "Command and Scripting Interpreter",
+    "desc": "Adversaries may abuse command and script interpreters to execute commands, scripts, or binaries. These interfaces and languages provide ways of interacting with computer systems and are a common feature across many different platforms. Most"
+  },
+  "T1059.001": {
+    "name": "PowerShell",
+    "desc": "Adversaries may abuse PowerShell commands and scripts for execution. PowerShell is a powerful interactive command-line interface and scripting environment included in the Windows operating system.(Citation: TechNet PowerShell) Adversaries c"
+  },
+  "T1059.002": {
+    "name": "AppleScript",
+    "desc": "Adversaries may abuse AppleScript for execution. AppleScript is a macOS scripting language designed to control applications and parts of the OS via inter-application messages called AppleEvents.(Citation: Apple AppleScript) These AppleEvent"
+  },
+  "T1059.003": {
+    "name": "Windows Command Shell",
+    "desc": "Adversaries may abuse the Windows command shell for execution. The Windows command shell ([cmd](https://attack.mitre.org/software/S0106)) is the primary command prompt on Windows systems. The Windows command prompt can be used to control al"
+  },
+  "T1059.004": {
+    "name": "Unix Shell",
+    "desc": "Adversaries may abuse Unix shell commands and scripts for execution. Unix shells are the primary command prompt on Linux, macOS, and ESXi systems, though many variations of the Unix shell exist (e.g. sh, ash, bash, zsh, etc.) depending on t"
+  },
+  "T1059.005": {
+    "name": "Visual Basic",
+    "desc": "Adversaries may abuse Visual Basic (VB) for execution. VB is a programming language created by Microsoft with interoperability with many Windows technologies such as [Component Object Model](https://attack.mitre.org/techniques/T1559/001) an"
+  },
+  "T1059.006": {
+    "name": "Python",
+    "desc": "Adversaries may abuse Python commands and scripts for execution. Python is a very popular scripting/programming language, with capabilities to perform many functions. Python can be executed interactively from the command-line (via the <code"
+  },
+  "T1059.008": {
+    "name": "Network Device CLI",
+    "desc": "Adversaries may abuse scripting or built-in command line interpreters (CLI) on network devices to execute malicious command and payloads. The CLI is the primary means through which users and administrators interact with the device in order "
+  },
+  "T1068": {
+    "name": "Exploitation for Privilege Escalation",
+    "desc": "Adversaries may exploit software vulnerabilities in an attempt to elevate privileges. Exploitation of a software vulnerability occurs when an adversary takes advantage of a programming error in a program, service, or within the operating sy"
+  },
+  "T1069": {
+    "name": "Permission Groups Discovery",
+    "desc": "Adversaries may attempt to discover group and permission settings. This information can help adversaries determine which user accounts and groups are available, the membership of users in particular groups, and which users and groups have e"
+  },
+  "T1069.001": {
+    "name": "Local Groups",
+    "desc": "Adversaries may attempt to find local system groups and permission settings. The knowledge of local system permission groups can help adversaries determine which groups exist and which users belong to a particular group. Adversaries may use"
+  },
+  "T1069.002": {
+    "name": "Domain Groups",
+    "desc": "Adversaries may attempt to find domain-level groups and permission settings. The knowledge of domain-level permission groups can help adversaries determine which groups exist and which users belong to a particular group. Adversaries may use"
+  },
+  "T1069.003": {
+    "name": "Cloud Groups",
+    "desc": "Adversaries may attempt to find cloud groups and permission settings. The knowledge of cloud permission groups can help adversaries determine the particular roles of users and groups within an environment, as well as which users are associa"
+  },
+  "T1070": {
+    "name": "Indicator Removal",
+    "desc": "Adversaries may selectively delete or modify artifacts generated to reduce indications of their presence and blend in with legitimate activity. Rather than broadly removing evidence, adversaries may target specific artifacts that appear ano"
+  },
+  "T1070.001": {
+    "name": "Clear Windows Event Logs",
+    "desc": "Adversaries may clear Windows Event Logs to hide the activity of an intrusion. Windows Event Logs are a record of a computer's alerts and notifications. There are three system-defined sources of events: System, Application, and Security, wi"
+  },
+  "T1070.002": {
+    "name": "Clear Linux or Mac System Logs",
+    "desc": "Adversaries may clear system logs to hide evidence of an intrusion. macOS and Linux both keep track of system or user-initiated actions via system logs. The majority of native system logging is stored under the <code>/var/log/</code> direct"
+  },
+  "T1070.003": {
+    "name": "Clear Command History",
+    "desc": "In addition to clearing system logs, an adversary may clear the command history of a compromised account to conceal the actions undertaken during an intrusion. Various command interpreters keep track of the commands users type in their term"
+  },
+  "T1070.004": {
+    "name": "File Deletion",
+    "desc": "Adversaries may delete files left behind by the actions of their intrusion activity. Malware, tools, or other non-native files dropped or created on a system by an adversary (ex: [Ingress Tool Transfer](https://attack.mitre.org/techniques/T"
+  },
+  "T1070.006": {
+    "name": "Timestomp",
+    "desc": "Adversaries may modify file time attributes to hide new files or changes to existing files. Timestomping is a technique that modifies the timestamps of a file (the modify, access, create, and change times), often to mimic files that are in "
+  },
+  "T1070.009": {
+    "name": "Clear Persistence",
+    "desc": "Adversaries may clear artifacts associated with previously established persistence on a host system to remove evidence of their activity. This may involve various actions, such as removing services, deleting executables, [Modify Registry](h"
+  },
+  "T1071": {
+    "name": "Application Layer Protocol",
+    "desc": "Adversaries may communicate using OSI application layer protocols to avoid detection/network filtering by blending in with existing traffic. Commands to the remote system, and often the results of those commands, will be embedded within the"
+  },
+  "T1071.001": {
+    "name": "Web Protocols",
+    "desc": "Adversaries may communicate using application layer protocols associated with web traffic to avoid detection/network filtering by blending in with existing traffic. Commands to the remote system, and often the results of those commands, wil"
+  },
+  "T1071.002": {
+    "name": "File Transfer Protocols",
+    "desc": "Adversaries may communicate using application layer protocols associated with transferring files to avoid detection/network filtering by blending in with existing traffic. Commands to the remote system, and often the results of those comman"
+  },
+  "T1071.004": {
+    "name": "DNS",
+    "desc": "Adversaries may communicate using the Domain Name System (DNS) application layer protocol to avoid detection/network filtering by blending in with existing traffic. Commands to the remote system, and often the results of those commands, wil"
+  },
+  "T1072": {
+    "name": "Software Deployment Tools",
+    "desc": "Adversaries may gain access to and use centralized software suites installed within an enterprise to execute commands and move laterally through the network. Configuration management and software deployment applications may be used in an en"
+  },
+  "T1074.002": {
+    "name": "Remote Data Staging",
+    "desc": "Adversaries may stage data collected from multiple systems in a central location or directory on one system prior to Exfiltration. Data may be kept in separate files or combined into one file through techniques such as [Archive Collected Da"
+  },
+  "T1078": {
+    "name": "Valid Accounts",
+    "desc": "Adversaries may obtain and abuse credentials of existing accounts as a means of gaining Initial Access, Persistence, Privilege Escalation, or Defense Evasion. Compromised credentials may be used to bypass access controls placed on various r"
+  },
+  "T1078.001": {
+    "name": "Default Accounts",
+    "desc": "Adversaries may obtain and abuse credentials of a default account as a means of gaining Initial Access, Persistence, Privilege Escalation, or Defense Evasion. Default accounts are those that are built-into an OS, such as the Guest or Admini"
+  },
+  "T1078.002": {
+    "name": "Domain Accounts",
+    "desc": "Adversaries may obtain and abuse credentials of a domain account as a means of gaining Initial Access, Persistence, Privilege Escalation, or Defense Evasion.(Citation: TechNet Credential Theft) Domain accounts are those managed by Active Di"
+  },
+  "T1078.003": {
+    "name": "Local Accounts",
+    "desc": "Adversaries may obtain and abuse credentials of a local account as a means of gaining Initial Access, Persistence, Privilege Escalation, or Defense Evasion. Local accounts are those configured by an organization for use by users, remote sup"
+  },
+  "T1078.004": {
+    "name": "Cloud Accounts",
+    "desc": "Valid accounts in cloud environments may allow adversaries to perform actions to achieve Initial Access, Persistence, Privilege Escalation, or Defense Evasion. Cloud accounts are those created and configured by an organization for use by us"
+  },
+  "T1080": {
+    "name": "Taint Shared Content",
+    "desc": ""
+  },
+  "T1082": {
+    "name": "System Information Discovery",
+    "desc": "An adversary may attempt to get detailed information about the operating system and hardware, including version, patches, hotfixes, service packs, and architecture. Adversaries may use this information to shape follow-on behaviors, includin"
+  },
+  "T1083": {
+    "name": "File and Directory Discovery",
+    "desc": "Adversaries may enumerate files and directories or may search in specific locations of a host or network share for certain information within a file system. Adversaries may use the information from [File and Directory Discovery](https://att"
+  },
+  "T1087": {
+    "name": "Account Discovery",
+    "desc": "Adversaries may attempt to get a listing of valid accounts, usernames, or email addresses on a system or within a compromised environment. This information can help adversaries determine which accounts exist, which can aid in follow-on beha"
+  },
+  "T1087.001": {
+    "name": "Local Account",
+    "desc": "Adversaries may attempt to get a listing of local system accounts. This information can help adversaries determine which local accounts exist on a system to aid in follow-on behavior."
+  },
+  "T1087.002": {
+    "name": "Domain Account",
+    "desc": "Adversaries may attempt to get a listing of domain accounts. This information can help adversaries determine which domain accounts exist to aid in follow-on behavior such as targeting specific accounts which possess particular privileges."
+  },
+  "T1090": {
+    "name": "Proxy",
+    "desc": "Adversaries may use a connection proxy to direct network traffic between systems or act as an intermediary for network communications to a command and control server to avoid direct connections to their infrastructure. Many tools exist that"
+  },
+  "T1090.001": {
+    "name": "Internal Proxy",
+    "desc": "Adversaries may use an internal proxy to direct command and control traffic between two or more systems in a compromised environment. Many tools exist that enable traffic redirection through proxies or port redirection, including [HTRAN](ht"
+  },
+  "T1090.002": {
+    "name": "External Proxy",
+    "desc": "Adversaries may use an external proxy to act as an intermediary for network communications to a command and control server to avoid direct connections to their infrastructure. Many tools exist that enable traffic redirection through proxies"
+  },
+  "T1090.003": {
+    "name": "Multi-hop Proxy",
+    "desc": "Adversaries may chain together multiple proxies to disguise the source of malicious traffic. Typically, a defender will be able to identify the last proxy traffic traversed before it enters their network; the defender may or may not be able"
+  },
+  "T1090.004": {
+    "name": "Domain Fronting",
+    "desc": "Adversaries may take advantage of routing schemes in Content Delivery Networks (CDNs) and other services which host multiple domains to obfuscate the intended destination of HTTPS traffic or traffic tunneled through HTTPS. (Citation: Fifiel"
+  },
+  "T1095": {
+    "name": "Non-Application Layer Protocol",
+    "desc": "Adversaries may use an OSI non-application layer protocol for communication between host and C2 server or among infected hosts within a network. The list of possible protocols is extensive.(Citation: Wikipedia OSI) Specific examples include"
+  },
+  "T1098": {
+    "name": "Account Manipulation",
+    "desc": "Adversaries may manipulate accounts to maintain and/or elevate access to victim systems. Account manipulation may consist of any action that preserves or modifies adversary access to a compromised account, such as modifying credentials or p"
+  },
+  "T1098.001": {
+    "name": "Additional Cloud Credentials",
+    "desc": "Adversaries may add adversary-controlled credentials to a cloud account to maintain persistent access to victim accounts and instances within the environment."
+  },
+  "T1098.002": {
+    "name": "Additional Email Delegate Permissions",
+    "desc": "Adversaries may grant additional permission levels to maintain persistent access to an adversary-controlled email account. "
+  },
+  "T1098.004": {
+    "name": "SSH Authorized Keys",
+    "desc": "Adversaries may modify the SSH <code>authorized_keys</code> file to maintain persistence on a victim host. Linux distributions, macOS, and ESXi hypervisors commonly use key-based authentication to secure the authentication process of SSH se"
+  },
+  "T1098.005": {
+    "name": "Device Registration",
+    "desc": "Adversaries may register a device to an adversary-controlled account. Devices may be registered in a multifactor authentication (MFA) system, which handles authentication to the network, or in a device management system, which handles devic"
+  },
+  "T1104": {
+    "name": "Multi-Stage Channels",
+    "desc": "Adversaries may create multiple stages for command and control that are employed under different conditions or for certain functions. Use of multiple stages may obfuscate the command and control channel to make detection more difficult."
+  },
+  "T1105": {
+    "name": "Ingress Tool Transfer",
+    "desc": "Adversaries may transfer tools or other files from an external system into a compromised environment. Tools or files may be copied from an external adversary-controlled system to the victim network through the command and control channel or"
+  },
+  "T1106": {
+    "name": "Native API",
+    "desc": "Adversaries may interact with the native OS application programming interface (API) to execute behaviors. Native APIs provide a controlled means of calling low-level OS services within the kernel, such as those involving hardware/devices, m"
+  },
+  "T1110": {
+    "name": "Brute Force",
+    "desc": "Adversaries may use brute force techniques to gain access to accounts when passwords are unknown or when password hashes are obtained.(Citation: TrendMicro Pawn Storm Dec 2020) Without knowledge of the password for an account or set of acco"
+  },
+  "T1110.001": {
+    "name": "Password Guessing",
+    "desc": "Adversaries with no prior knowledge of legitimate credentials within the system or environment may guess passwords to attempt access to accounts. Without knowledge of the password for an account, an adversary may opt to systematically guess"
+  },
+  "T1110.002": {
+    "name": "Password Cracking",
+    "desc": "Adversaries may use password cracking to attempt to recover usable credentials, such as plaintext passwords, when credential material such as password hashes are obtained. [OS Credential Dumping](https://attack.mitre.org/techniques/T1003) c"
+  },
+  "T1110.003": {
+    "name": "Password Spraying",
+    "desc": "Adversaries may use a single or small list of commonly used passwords against many different accounts to attempt to acquire valid account credentials. Password spraying uses one password (e.g. 'Password01'), or a small list of commonly used"
+  },
+  "T1110.004": {
+    "name": "Credential Stuffing",
+    "desc": "Adversaries may use credentials obtained from breach dumps of unrelated accounts to gain access to target accounts through credential overlap. Occasionally, large numbers of username and password pairs are dumped online when a website or se"
+  },
+  "T1111": {
+    "name": "Multi-Factor Authentication Interception",
+    "desc": "Adversaries may target multi-factor authentication (MFA) mechanisms, (i.e., smart cards, token generators, etc.) to gain access to credentials that can be used to access systems, services, and network resources. Use of MFA is recommended an"
+  },
+  "T1112": {
+    "name": "Modify Registry",
+    "desc": "Adversaries may interact with the Windows Registry as part of a variety of other techniques to aid in defense evasion, persistence, and execution."
+  },
+  "T1113": {
+    "name": "Screen Capture",
+    "desc": "Adversaries may attempt to take screen captures of the desktop to gather information over the course of an operation. Screen capturing functionality may be included as a feature of a remote access tool used in post-compromise operations. Ta"
+  },
+  "T1114": {
+    "name": "Email Collection",
+    "desc": "Adversaries may target user email to collect sensitive information. Emails may contain sensitive data, including trade secrets or personal information, that can prove valuable to adversaries. Emails may also contain details of ongoing incid"
+  },
+  "T1114.002": {
+    "name": "Remote Email Collection",
+    "desc": "Adversaries may target an Exchange server, Office 365, or Google Workspace to collect sensitive information. Adversaries may leverage a user's credentials and interact directly with the Exchange server to acquire information from within a n"
+  },
+  "T1114.003": {
+    "name": "Email Forwarding Rule",
+    "desc": "Adversaries may setup email forwarding rules to collect sensitive information. Adversaries may abuse email forwarding rules to monitor the activities of a victim, steal information, and further gain intelligence on the victim or the victim\u2019"
+  },
+  "T1115": {
+    "name": "Clipboard Data",
+    "desc": "Adversaries may collect data stored in the clipboard from users copying information within or between applications. "
+  },
+  "T1119": {
+    "name": "Automated Collection",
+    "desc": "Once established within a system or network, an adversary may use automated techniques for collecting internal data. Methods for performing this technique could include use of a [Command and Scripting Interpreter](https://attack.mitre.org/t"
+  },
+  "T1125": {
+    "name": "Video Capture",
+    "desc": "An adversary can leverage a computer's peripheral devices (e.g., integrated cameras or webcams) or applications (e.g., video call services) to capture video recordings for the purpose of gathering information. Images may also be captured fr"
+  },
+  "T1132.001": {
+    "name": "Standard Encoding",
+    "desc": "Adversaries may encode data with a standard data encoding system to make the content of command and control traffic more difficult to detect. Command and control (C2) information can be encoded using a standard data encoding system that adh"
+  },
+  "T1133": {
+    "name": "External Remote Services",
+    "desc": "Adversaries may leverage external-facing remote services to initially access and/or persist within a network. Remote services such as VPNs, Citrix, and other access mechanisms allow users to connect to internal enterprise network resources "
+  },
+  "T1134.001": {
+    "name": "Token Impersonation/Theft",
+    "desc": "Adversaries may duplicate then impersonate another user's existing token to escalate privileges and bypass access controls. For example, an adversary can duplicate an existing token using `DuplicateToken` or `DuplicateTokenEx`.(Citation: Du"
+  },
+  "T1134.002": {
+    "name": "Create Process with Token",
+    "desc": "Adversaries may create a new process with an existing token to escalate privileges and bypass access controls. Processes can be created with the token and resulting security context of another user using features such as <code>CreateProcess"
+  },
+  "T1134.003": {
+    "name": "Make and Impersonate Token",
+    "desc": "Adversaries may make new tokens and impersonate users to escalate privileges and bypass access controls. For example, if an adversary has a username and password but the user is not logged onto the system the adversary can then create a log"
+  },
+  "T1135": {
+    "name": "Network Share Discovery",
+    "desc": "Adversaries may look for folders and drives shared on remote systems as a means of identifying sources of information to gather as a precursor for Collection and to identify potential systems of interest for Lateral Movement. Networks often"
+  },
+  "T1136": {
+    "name": "Create Account",
+    "desc": "Adversaries may create an account to maintain access to victim systems.(Citation: Symantec WastedLocker June 2020) With a sufficient level of access, creating such accounts may be used to establish secondary credentialed access that do not "
+  },
+  "T1136.001": {
+    "name": "Local Account",
+    "desc": "Adversaries may create a local account to maintain access to victim systems. Local accounts are those configured by an organization for use by users, remote support, services, or for administration on a single system or service. "
+  },
+  "T1136.002": {
+    "name": "Domain Account",
+    "desc": "Adversaries may create a domain account to maintain access to victim systems. Domain accounts are those managed by Active Directory Domain Services where access and permissions are configured across systems and services that are part of tha"
+  },
+  "T1140": {
+    "name": "Deobfuscate/Decode Files or Information",
+    "desc": "Adversaries may use [Obfuscated Files or Information](https://attack.mitre.org/techniques/T1027) to hide artifacts of an intrusion from analysis. They may require separate mechanisms to decode or deobfuscate that information depending on ho"
+  },
+  "T1176": {
+    "name": "Software Extensions",
+    "desc": "Adversaries may abuse software extensions to establish persistent access to victim systems. Software extensions are modular components that enhance or customize the functionality of software applications, including web browsers, Integrated "
+  },
+  "T1185": {
+    "name": "Browser Session Hijacking",
+    "desc": "Adversaries may take advantage of security vulnerabilities and inherent functionality in browser software to change content, modify user-behaviors, and intercept information as part of various browser session hijacking techniques.(Citation:"
+  },
+  "T1187": {
+    "name": "Forced Authentication",
+    "desc": "Adversaries may gather credential material by invoking or forcing a user to automatically provide authentication information through a mechanism in which they can intercept."
+  },
+  "T1189": {
+    "name": "Drive-by Compromise",
+    "desc": "Adversaries may gain access to a system through a user visiting a website over the normal course of browsing. Multiple ways of delivering exploit code to a browser exist (i.e., [Drive-by Target](https://attack.mitre.org/techniques/T1608/004"
+  },
+  "T1190": {
+    "name": "Exploit Public-Facing Application",
+    "desc": "Adversaries may attempt to exploit a weakness in an Internet-facing host or system to initially access a network. The weakness in the system can be a software bug, a temporary glitch, or a misconfiguration."
+  },
+  "T1195.002": {
+    "name": "Compromise Software Supply Chain",
+    "desc": "Adversaries may manipulate application software prior to receipt by a final consumer for the purpose of data or system compromise. Supply chain compromise of software can take place in a number of ways, including manipulation of the applica"
+  },
+  "T1197": {
+    "name": "BITS Jobs",
+    "desc": "Adversaries may abuse BITS jobs to persistently execute code and perform various background tasks. Windows Background Intelligent Transfer Service (BITS) is a low-bandwidth, asynchronous file transfer mechanism exposed through [Component Ob"
+  },
+  "T1199": {
+    "name": "Trusted Relationship",
+    "desc": "Adversaries may breach or otherwise leverage organizations who have access to intended victims. Access through trusted third party relationship abuses an existing connection that may not be protected or receives less scrutiny than standard "
+  },
+  "T1202": {
+    "name": "Indirect Command Execution",
+    "desc": "Adversaries may abuse utilities that allow for command execution to bypass security restrictions that limit the use of command-line interpreters. Various Windows utilities may be used to execute commands, possibly without invoking [cmd](htt"
+  },
+  "T1203": {
+    "name": "Exploitation for Client Execution",
+    "desc": "Adversaries may exploit software vulnerabilities in client applications to execute code. Vulnerabilities can exist in software due to unsecure coding practices that can lead to unanticipated behavior. Adversaries can take advantage of certa"
+  },
+  "T1204": {
+    "name": "User Execution",
+    "desc": "An adversary may rely upon specific actions by a user in order to gain execution. Users may be subjected to social engineering to get them to execute malicious code by, for example, opening a malicious document file or link. These user acti"
+  },
+  "T1204.001": {
+    "name": "Malicious Link",
+    "desc": "An adversary may rely upon a user clicking a malicious link in order to gain execution. Users may be subjected to social engineering to get them to click on a link that will lead to code execution. This user action will typically be observe"
+  },
+  "T1204.002": {
+    "name": "Malicious File",
+    "desc": "An adversary may rely upon a user opening a malicious file in order to gain execution. Users may be subjected to social engineering to get them to open a file that will lead to code execution. This user action will typically be observed as "
+  },
+  "T1204.004": {
+    "name": "Malicious Copy and Paste",
+    "desc": "An adversary may rely upon a user copying and pasting code in order to gain execution. Users may be subjected to social engineering to get them to copy and paste code directly into a [Command and Scripting Interpreter](https://attack.mitre."
+  },
+  "T1210": {
+    "name": "Exploitation of Remote Services",
+    "desc": "Adversaries may exploit remote services to gain unauthorized access to internal systems once inside of a network. Exploitation of a software vulnerability occurs when an adversary takes advantage of a programming error in a program, service"
+  },
+  "T1213": {
+    "name": "Data from Information Repositories",
+    "desc": "Adversaries may leverage information repositories to mine valuable information. Information repositories are tools that allow for storage of information, typically to facilitate collaboration or information sharing between users, and can st"
+  },
+  "T1213.001": {
+    "name": "Confluence",
+    "desc": ""
+  },
+  "T1217": {
+    "name": "Browser Information Discovery",
+    "desc": "Adversaries may enumerate information about browsers to learn more about compromised environments. Data saved by browsers (such as bookmarks, accounts, and browsing history) may reveal a variety of personal information about users (e.g., ba"
+  },
+  "T1218.005": {
+    "name": "Mshta",
+    "desc": "Adversaries may abuse mshta.exe to proxy execution of malicious .hta files and Javascript or VBScript through a trusted Windows utility. There are several examples of different types of threats leveraging mshta.exe during initial compromise"
+  },
+  "T1218.011": {
+    "name": "Rundll32",
+    "desc": "Adversaries may abuse rundll32.exe to proxy execution of malicious code. Using rundll32.exe, vice executing directly (i.e. [Shared Modules](https://attack.mitre.org/techniques/T1129)), may avoid triggering security tools that may not monito"
+  },
+  "T1219": {
+    "name": "Remote Access Tools",
+    "desc": "An adversary may use legitimate remote access tools to establish an interactive command and control channel within a network. Remote access tools create a session between two trusted hosts through a graphical interface, a command line inter"
+  },
+  "T1222.001": {
+    "name": "Windows Permissions",
+    "desc": "Adversaries may modify file or directory permissions/attributes to evade access control lists (ACLs) and access protected files.(Citation: Hybrid Analysis Icacls1 June 2018)(Citation: Hybrid Analysis Icacls2 May 2018) File and directory per"
+  },
+  "T1222.002": {
+    "name": "Linux and Mac Permissions",
+    "desc": "Adversaries may modify file or directory permissions/attributes to evade access control lists (ACLs) and access protected files.(Citation: Hybrid Analysis Icacls1 June 2018)(Citation: Hybrid Analysis Icacls2 May 2018) File and directory per"
+  },
+  "T1482": {
+    "name": "Domain Trust Discovery",
+    "desc": "Adversaries may attempt to gather information on domain trust relationships that may be used to identify lateral movement opportunities in Windows multi-domain/forest environments. Domain trusts provide a mechanism for a domain to allow acc"
+  },
+  "T1484": {
+    "name": "Domain or Tenant Policy Modification",
+    "desc": "Adversaries may modify the configuration settings of a domain or identity tenant to evade defenses and/or escalate privileges in centrally managed environments. Such services provide a centralized means of managing identity resources such a"
+  },
+  "T1484.001": {
+    "name": "Group Policy Modification",
+    "desc": "Adversaries may modify Group Policy Objects (GPOs) to subvert the intended discretionary access controls for a domain, usually with the intention of escalating privileges on the domain. Group policy allows for centralized management of user"
+  },
+  "T1484.002": {
+    "name": "Trust Modification",
+    "desc": "Adversaries may add new domain trusts, modify the properties of existing domain trusts, or otherwise change the configuration of trust relationships between domains and tenants to evade defenses and/or elevate privileges.Trust details, such"
+  },
+  "T1485": {
+    "name": "Data Destruction",
+    "desc": "Adversaries may destroy data and files on specific systems or in large numbers on a network to interrupt availability to systems, services, and network resources. Data destruction is likely to render stored data irrecoverable by forensic te"
+  },
+  "T1486": {
+    "name": "Data Encrypted for Impact",
+    "desc": "Adversaries may encrypt data on target systems or on large numbers of systems in a network to interrupt availability to system and network resources. They can attempt to render stored data inaccessible by encrypting files or data on local a"
+  },
+  "T1489": {
+    "name": "Service Stop",
+    "desc": "Adversaries may stop or disable services on a system to render those services unavailable to legitimate users. Stopping critical services or processes can inhibit or stop response to an incident or aid in the adversary's overall objectives "
+  },
+  "T1490": {
+    "name": "Inhibit System Recovery",
+    "desc": "Adversaries may delete or remove built-in data and turn off services designed to aid in the recovery of a corrupted system to prevent recovery.(Citation: Talos Olympic Destroyer 2018)(Citation: FireEye WannaCry 2017) This may deny access to"
+  },
+  "T1496": {
+    "name": "Resource Hijacking",
+    "desc": "Adversaries may leverage the resources of co-opted systems to complete resource-intensive tasks, which may impact system and/or hosted service availability. "
+  },
+  "T1505": {
+    "name": "Server Software Component",
+    "desc": "Adversaries may abuse legitimate extensible development features of servers to establish persistent access to systems. Enterprise server applications may include features that allow developers to write and install software or scripts to ext"
+  },
+  "T1505.003": {
+    "name": "Web Shell",
+    "desc": "Adversaries may backdoor web servers with web shells to establish persistent access to systems. A Web shell is a Web script that is placed on an openly accessible Web server to allow an adversary to access the Web server as a gateway into a"
+  },
+  "T1518": {
+    "name": "Software Discovery",
+    "desc": "Adversaries may attempt to get a listing of software and software versions that are installed on a system or in a cloud environment. Adversaries may use the information from [Software Discovery](https://attack.mitre.org/techniques/T1518) du"
+  },
+  "T1518.001": {
+    "name": "Security Software Discovery",
+    "desc": "Adversaries may attempt to get a listing of security software, configurations, defensive tools, and sensors that are installed on a system or in a cloud environment. This may include things such as cloud monitoring agents and anti-virus. Ad"
+  },
+  "T1526": {
+    "name": "Cloud Service Discovery",
+    "desc": "An adversary may attempt to enumerate the cloud services running on a system after gaining access. These methods can differ from platform-as-a-service (PaaS), to infrastructure-as-a-service (IaaS), or software-as-a-service (SaaS). Many serv"
+  },
+  "T1528": {
+    "name": "Steal Application Access Token",
+    "desc": "Adversaries can steal application access tokens as a means of acquiring credentials to access remote systems and resources."
+  },
+  "T1529": {
+    "name": "System Shutdown/Reboot",
+    "desc": "Adversaries may shutdown/reboot systems to interrupt access to, or aid in the destruction of, those systems. Operating systems may contain commands to initiate a shutdown/reboot of a machine or network device. In some cases, these commands "
+  },
+  "T1530": {
+    "name": "Data from Cloud Storage",
+    "desc": "Adversaries may access data from cloud storage."
+  },
+  "T1531": {
+    "name": "Account Access Removal",
+    "desc": "Adversaries may interrupt availability of system and network resources by inhibiting access to accounts utilized by legitimate users. Accounts may be deleted, locked, or manipulated (ex: changed credentials, revoked permissions for SaaS pla"
+  },
+  "T1537": {
+    "name": "Transfer Data to Cloud Account",
+    "desc": "Adversaries may exfiltrate data by transferring the data, including through sharing/syncing and creating backups of cloud environments, to another cloud account they control on the same service."
+  },
+  "T1539": {
+    "name": "Steal Web Session Cookie",
+    "desc": "An adversary may steal web application or service session cookies and use them to gain access to web applications or Internet services as an authenticated user without needing credentials. Web applications and services often use session coo"
+  },
+  "T1543.001": {
+    "name": "Launch Agent",
+    "desc": "Adversaries may create or modify launch agents to repeatedly execute malicious payloads as part of persistence. When a user logs in, a per-user launchd process is started which loads the parameters for each launch-on-demand user agent from "
+  },
+  "T1543.005": {
+    "name": "Container Service",
+    "desc": "Adversaries may create or modify container or container cluster management tools that run as daemons, agents, or services on individual hosts. These include software for creating and managing individual containers, such as Docker and Podman"
+  },
+  "T1546.003": {
+    "name": "Windows Management Instrumentation Event Subscription",
+    "desc": "Adversaries may establish persistence and elevate privileges by executing malicious content triggered by a Windows Management Instrumentation (WMI) event subscription. WMI can be used to install event filters, providers, consumers, and bind"
+  },
+  "T1546.004": {
+    "name": "Unix Shell Configuration Modification",
+    "desc": "Adversaries may establish persistence through executing malicious commands triggered by a user\u2019s shell. User [Unix Shell](https://attack.mitre.org/techniques/T1059/004)s execute several configuration scripts at different points throughout t"
+  },
+  "T1547": {
+    "name": "Boot or Logon Autostart Execution",
+    "desc": "Adversaries may configure system settings to automatically execute a program during system boot or logon to maintain persistence or gain higher-level privileges on compromised systems. Operating systems may have mechanisms for automatically"
+  },
+  "T1547.001": {
+    "name": "Registry Run Keys / Startup Folder",
+    "desc": "Adversaries may achieve persistence by adding a program to a startup folder or referencing it with a Registry run key. Adding an entry to the \"run keys\" in the Registry or startup folder will cause the program referenced to be executed when"
+  },
+  "T1547.009": {
+    "name": "Shortcut Modification",
+    "desc": "Adversaries may create or modify shortcuts that can execute a program during system boot or user login. Shortcuts or symbolic links are used to reference other files or programs that will be opened or executed when the shortcut is clicked o"
+  },
+  "T1548.002": {
+    "name": "Bypass User Account Control",
+    "desc": "Adversaries may bypass UAC mechanisms to elevate process privileges on system. Windows User Account Control (UAC) allows a program to elevate its privileges (tracked as integrity levels ranging from low to high) to perform a task under admi"
+  },
+  "T1548.003": {
+    "name": "Sudo and Sudo Caching",
+    "desc": "Adversaries may perform sudo caching and/or use the sudoers file to elevate privileges. Adversaries may do this to execute commands as other users or spawn processes with higher privileges."
+  },
+  "T1550.002": {
+    "name": "Pass the Hash",
+    "desc": "Adversaries may \u201cpass the hash\u201d using stolen password hashes to move laterally within an environment, bypassing normal system access controls. Pass the hash (PtH) is a method of authenticating as a user without having access to the user's c"
+  },
+  "T1550.003": {
+    "name": "Pass the Ticket",
+    "desc": "Adversaries may \u201cpass the ticket\u201d using stolen Kerberos tickets to move laterally within an environment, bypassing normal system access controls. Pass the ticket (PtT) is a method of authenticating to a system using Kerberos tickets without"
+  },
+  "T1550.004": {
+    "name": "Web Session Cookie",
+    "desc": "Adversaries can use stolen session cookies to authenticate to web applications and services. This technique bypasses some multi-factor authentication protocols since the session is already authenticated.(Citation: Pass The Cookie)"
+  },
+  "T1552.001": {
+    "name": "Credentials In Files",
+    "desc": "Adversaries may search local file systems and remote file shares for files containing insecurely stored credentials. These can be files created by users to store their own credentials, shared credential stores for a group of individuals, co"
+  },
+  "T1552.003": {
+    "name": "Shell History",
+    "desc": "Adversaries may search the command history on compromised systems for insecurely stored credentials."
+  },
+  "T1552.004": {
+    "name": "Private Keys",
+    "desc": "Adversaries may search for private key certificate files on compromised systems for insecurely stored credentials. Private cryptographic keys and certificates are used for authentication, encryption/decryption, and digital signatures.(Citat"
+  },
+  "T1552.006": {
+    "name": "Group Policy Preferences",
+    "desc": "Adversaries may attempt to find unsecured credentials in Group Policy Preferences (GPP). GPP are tools that allow administrators to create domain policies with embedded credentials. These policies allow administrators to set local accounts."
+  },
+  "T1555": {
+    "name": "Credentials from Password Stores",
+    "desc": "Adversaries may search for common password storage locations to obtain user credentials.(Citation: F-Secure The Dukes) Passwords are stored in several places on a system, depending on the operating system or application holding the credenti"
+  },
+  "T1555.001": {
+    "name": "Keychain",
+    "desc": "Adversaries may acquire credentials from Keychain. Keychain (or Keychain Services) is the macOS credential management system that stores account names, passwords, private keys, certificates, sensitive application data, payment data, and sec"
+  },
+  "T1555.003": {
+    "name": "Credentials from Web Browsers",
+    "desc": "Adversaries may acquire credentials from web browsers by reading files specific to the target browser.(Citation: Talos Olympic Destroyer 2018) Web browsers commonly save credentials such as website usernames and passwords so that they do no"
+  },
+  "T1555.004": {
+    "name": "Windows Credential Manager",
+    "desc": "Adversaries may acquire credentials from the Windows Credential Manager. The Credential Manager stores credentials for signing into websites, applications, and/or devices that request authentication through NTLM or Kerberos in Credential Lo"
+  },
+  "T1555.005": {
+    "name": "Password Managers",
+    "desc": "Adversaries may acquire user credentials from third-party password managers.(Citation: ise Password Manager February 2019) Password managers are applications designed to store user credentials, normally in an encrypted database. Credentials"
+  },
+  "T1556": {
+    "name": "Modify Authentication Process",
+    "desc": "Adversaries may modify authentication mechanisms and processes to access user credentials or enable otherwise unwarranted access to accounts. The authentication process is handled by mechanisms, such as the Local Security Authentication Ser"
+  },
+  "T1556.006": {
+    "name": "Multi-Factor Authentication",
+    "desc": "Adversaries may disable or modify multi-factor authentication (MFA) mechanisms to enable persistent access to compromised accounts."
+  },
+  "T1557": {
+    "name": "Adversary-in-the-Middle",
+    "desc": "Adversaries may attempt to position themselves between two or more networked devices using an adversary-in-the-middle (AiTM) technique to support follow-on behaviors such as [Network Sniffing](https://attack.mitre.org/techniques/T1040), [Tr"
+  },
+  "T1558.001": {
+    "name": "Golden Ticket",
+    "desc": "Adversaries who have the KRBTGT account password hash may forge Kerberos ticket-granting tickets (TGT), also known as a golden ticket.(Citation: AdSecurity Kerberos GT Aug 2015) Golden tickets enable adversaries to generate authentication m"
+  },
+  "T1558.003": {
+    "name": "Kerberoasting",
+    "desc": "Adversaries may abuse a valid Kerberos ticket-granting ticket (TGT) or sniff network traffic to obtain a ticket-granting service (TGS) ticket that may be vulnerable to [Brute Force](https://attack.mitre.org/techniques/T1110).(Citation: Empi"
+  },
+  "T1560": {
+    "name": "Archive Collected Data",
+    "desc": "An adversary may compress and/or encrypt data that is collected prior to exfiltration. Compressing the data can help to obfuscate the collected data and minimize the amount of data sent over the network.(Citation: DOJ GRU Indictment Jul 201"
+  },
+  "T1560.001": {
+    "name": "Archive via Utility",
+    "desc": "Adversaries may use utilities to compress and/or encrypt collected data prior to exfiltration. Many utilities include functionalities to compress, encrypt, or otherwise package data into a format that is easier/more secure to transport."
+  },
+  "T1561.002": {
+    "name": "Disk Structure Wipe",
+    "desc": "Adversaries may corrupt or wipe the disk data structures on a hard drive necessary to boot a system; targeting specific critical systems or in large numbers in a network to interrupt availability to system and network resources. "
+  },
+  "T1562": {
+    "name": "Impair Defenses",
+    "desc": "Adversaries may maliciously modify components of a victim environment in order to hinder or disable defensive mechanisms. This not only involves impairing preventative defenses, such as firewalls and anti-virus, but also detection capabilit"
+  },
+  "T1562.001": {
+    "name": "Disable or Modify Tools",
+    "desc": "Adversaries may modify and/or disable security tools to avoid possible detection of their malware/tools and activities. This may take many forms, such as killing security software processes or services, modifying / deleting Registry keys or"
+  },
+  "T1562.004": {
+    "name": "Disable or Modify System Firewall",
+    "desc": "Adversaries may disable or modify system firewalls in order to bypass controls limiting network usage. Changes could be disabling the entire mechanism as well as adding, deleting, or modifying particular rules. This can be done numerous way"
+  },
+  "T1562.010": {
+    "name": "Downgrade Attack",
+    "desc": "Adversaries may downgrade or use a version of system features that may be outdated, vulnerable, and/or does not support updated security controls. Downgrade attacks typically take advantage of a system\u2019s backward compatibility to force it i"
+  },
+  "T1564.002": {
+    "name": "Hidden Users",
+    "desc": "Adversaries may use hidden users to hide the presence of user accounts they create or modify. Administrators may want to hide users when there are many user accounts on a given system or if they want to hide their administrative or other ma"
+  },
+  "T1564.003": {
+    "name": "Hidden Window",
+    "desc": "Adversaries may use hidden windows to conceal malicious activity from the plain sight of users. In some cases, windows that would typically be displayed when an application carries out an operation can be hidden. This may be utilized by sys"
+  },
+  "T1564.008": {
+    "name": "Email Hiding Rules",
+    "desc": "Adversaries may use email rules to hide inbound emails in a compromised user's mailbox. Many email clients allow users to create inbox rules for various email functions, including moving emails to other folders, marking emails as read, or d"
+  },
+  "T1565": {
+    "name": "Data Manipulation",
+    "desc": "Adversaries may insert, delete, or manipulate data in order to influence external outcomes or hide activity, thus threatening the integrity of the data.(Citation: Sygnia Elephant Beetle Jan 2022) By manipulating data, adversaries may attemp"
+  },
+  "T1566": {
+    "name": "Phishing",
+    "desc": "Adversaries may send phishing messages to gain access to victim systems. All forms of phishing are electronically delivered social engineering. Phishing can be targeted, known as spearphishing. In spearphishing, a specific individual, compa"
+  },
+  "T1566.001": {
+    "name": "Spearphishing Attachment",
+    "desc": "Adversaries may send spearphishing emails with a malicious attachment in an attempt to gain access to victim systems. Spearphishing attachment is a specific variant of spearphishing. Spearphishing attachment is different from other forms of"
+  },
+  "T1566.002": {
+    "name": "Spearphishing Link",
+    "desc": "Adversaries may send spearphishing emails with a malicious link in an attempt to gain access to victim systems. Spearphishing with a link is a specific variant of spearphishing. It is different from other forms of spearphishing in that it e"
+  },
+  "T1566.004": {
+    "name": "Spearphishing Voice",
+    "desc": "Adversaries may use voice communications to ultimately gain access to victim systems. Spearphishing voice is a specific variant of spearphishing. It is different from other forms of spearphishing in that it employs the use of manipulating a"
+  },
+  "T1567": {
+    "name": "Exfiltration Over Web Service",
+    "desc": "Adversaries may use an existing, legitimate external Web service to exfiltrate data rather than their primary command and control channel. Popular Web services acting as an exfiltration mechanism may give a significant amount of cover due t"
+  },
+  "T1567.002": {
+    "name": "Exfiltration to Cloud Storage",
+    "desc": "Adversaries may exfiltrate data to a cloud storage service rather than over their primary command and control channel. Cloud storage services allow for the storage, edit, and retrieval of data from a remote cloud storage server over the Int"
+  },
+  "T1569": {
+    "name": "System Services",
+    "desc": "Adversaries may abuse system services or daemons to execute commands or programs. Adversaries can execute malicious content by interacting with or creating services either locally or remotely. Many services are set to run at boot, which can"
+  },
+  "T1569.002": {
+    "name": "Service Execution",
+    "desc": "Adversaries may abuse the Windows service control manager to execute malicious commands or payloads. The Windows service control manager (<code>services.exe</code>) is an interface to manage and manipulate services.(Citation: Microsoft Serv"
+  },
+  "T1571": {
+    "name": "Non-Standard Port",
+    "desc": "Adversaries may communicate using a protocol and port pairing that are typically not associated. For example, HTTPS over port 8088(Citation: Symantec Elfin Mar 2019) or port 587(Citation: Fortinet Agent Tesla April 2018) as opposed to the t"
+  },
+  "T1572": {
+    "name": "Protocol Tunneling",
+    "desc": "Adversaries may tunnel network communications to and from a victim system within a separate protocol to avoid detection/network filtering and/or enable access to otherwise unreachable systems. Tunneling involves explicitly encapsulating a p"
+  },
+  "T1573": {
+    "name": "Encrypted Channel",
+    "desc": "Adversaries may employ an encryption algorithm to conceal command and control traffic rather than relying on any inherent protections provided by a communication protocol. Despite the use of a secure algorithm, these implementations may be "
+  },
+  "T1574": {
+    "name": "Hijack Execution Flow",
+    "desc": "Adversaries may execute their own malicious payloads by hijacking the way operating systems run programs. Hijacking execution flow can be for the purposes of persistence, since this hijacked execution may reoccur over time. Adversaries may "
+  },
+  "T1574.001": {
+    "name": "DLL",
+    "desc": "Adversaries may abuse dynamic-link library files (DLLs) in order to achieve persistence, escalate privileges, and evade defenses. DLLs are libraries that contain code and data that can be simultaneously utilized by multiple programs. While "
+  },
+  "T1574.002": {
+    "name": "DLL Side-Loading",
+    "desc": "Adversaries may execute their own malicious payloads by side-loading DLLs. Similar to [DLL](https://attack.mitre.org/techniques/T1574/001), side-loading involves hijacking which DLL a program loads. But rather than just planting the DLL wit"
+  },
+  "T1574.007": {
+    "name": "Path Interception by PATH Environment Variable",
+    "desc": "Adversaries may execute their own malicious payloads by hijacking environment variables used to load libraries. The PATH environment variable contains a list of directories (User and System) that the OS searches sequentially through in sear"
+  },
+  "T1574.014": {
+    "name": "AppDomainManager",
+    "desc": "Adversaries may execute their own malicious payloads by hijacking how the .NET `AppDomainManager` loads assemblies. The .NET framework uses the `AppDomainManager` class to create and manage one or more isolated runtime environments (called "
+  },
+  "T1583": {
+    "name": "Acquire Infrastructure",
+    "desc": "Adversaries may buy, lease, rent, or obtain infrastructure that can be used during targeting. A wide variety of infrastructure exists for hosting and orchestrating adversary operations. Infrastructure solutions include physical or cloud ser"
+  },
+  "T1583.003": {
+    "name": "Virtual Private Server",
+    "desc": "Adversaries may rent Virtual Private Servers (VPSs)\u00a0that can be used during targeting. There exist a variety of cloud service providers that will sell virtual machines/containers as a service. By utilizing a VPS, adversaries can make it dif"
+  },
+  "T1584.005": {
+    "name": "Botnet",
+    "desc": "Adversaries may compromise numerous third-party systems to form a botnet\u00a0that can be used during targeting. A botnet is a network of compromised systems that can be instructed to perform coordinated tasks.(Citation: Norton Botnet) Instead o"
+  },
+  "T1584.008": {
+    "name": "Network Devices",
+    "desc": "Adversaries may compromise third-party network devices that can be used during targeting. Network devices, such as small office/home office (SOHO) routers, may be compromised where the adversary's ultimate goal is not [Initial Access](https"
+  },
+  "T1585": {
+    "name": "Establish Accounts",
+    "desc": "Adversaries may create and cultivate accounts with services that can be used during targeting. Adversaries can create accounts that can be used to build a persona to further operations. Persona development consists of the development of pub"
+  },
+  "T1586.002": {
+    "name": "Email Accounts",
+    "desc": "Adversaries may compromise email accounts that can be used during targeting. Adversaries can use compromised email accounts to further their operations, such as leveraging them to conduct [Phishing for Information](https://attack.mitre.org/"
+  },
+  "T1586.003": {
+    "name": "Cloud Accounts",
+    "desc": "Adversaries may compromise cloud accounts that can be used during targeting. Adversaries can use compromised cloud accounts to further their operations, including leveraging cloud storage services such as Dropbox, Microsoft OneDrive, or AWS"
+  },
+  "T1587": {
+    "name": "Develop Capabilities",
+    "desc": "Adversaries may build capabilities that can be used during targeting. Rather than purchasing, freely downloading, or stealing capabilities, adversaries may develop their own capabilities in-house. This is the process of identifying developm"
+  },
+  "T1587.001": {
+    "name": "Malware",
+    "desc": "Adversaries may develop malware and malware components that can be used during targeting. Building malicious software can include the development of payloads, droppers, post-compromise tools, backdoors (including backdoored images), packers"
+  },
+  "T1587.004": {
+    "name": "Exploits",
+    "desc": "Adversaries may develop exploits that can be used during targeting. An exploit takes advantage of a bug or vulnerability in order to cause unintended or unanticipated behavior to occur on computer hardware or software. Rather than finding/m"
+  },
+  "T1588.001": {
+    "name": "Malware",
+    "desc": "Adversaries may buy, steal, or download malware that can be used during targeting. Malicious software can include payloads, droppers, post-compromise tools, backdoors, packers, and C2 protocols. Adversaries may acquire malware to support th"
+  },
+  "T1588.002": {
+    "name": "Tool",
+    "desc": "Adversaries may buy, steal, or download software tools that can be used during targeting. Tools can be open or closed source, free or commercial. A tool can be used for malicious purposes by an adversary, but (unlike malware) were not inten"
+  },
+  "T1588.005": {
+    "name": "Exploits",
+    "desc": "Adversaries may buy, steal, or download exploits that can be used during targeting. An exploit takes advantage of a bug or vulnerability in order to cause unintended or unanticipated behavior to occur on computer hardware or software. Rathe"
+  },
+  "T1588.007": {
+    "name": "Artificial Intelligence",
+    "desc": "Adversaries may obtain access to generative artificial intelligence tools, such as large language models (LLMs), to aid various techniques during targeting. These tools may be used to inform, bolster, and enable a variety of malicious tasks"
+  },
+  "T1589": {
+    "name": "Gather Victim Identity Information",
+    "desc": "Adversaries may gather information about the victim's identity that can be used during targeting. Information about identities may include a variety of details, including personal data (ex: employee names, email addresses, security question"
+  },
+  "T1589.001": {
+    "name": "Credentials",
+    "desc": "Adversaries may gather credentials that can be used during targeting. Account credentials gathered by adversaries may be those directly associated with the target victim organization or attempt to take advantage of the tendency for users to"
+  },
+  "T1589.002": {
+    "name": "Email Addresses",
+    "desc": "Adversaries may gather email addresses that can be used during targeting. Even if internal instances exist, organizations may have public-facing email infrastructure and addresses for employees."
+  },
+  "T1589.003": {
+    "name": "Employee Names",
+    "desc": "Adversaries may gather employee names that can be used during targeting. Employee names be used to derive email addresses as well as to help guide other reconnaissance efforts and/or craft more-believable lures."
+  },
+  "T1590": {
+    "name": "Gather Victim Network Information",
+    "desc": "Adversaries may gather information about the victim's networks that can be used during targeting. Information about networks may include a variety of details, including administrative data (ex: IP ranges, domain names, etc.) as well as spec"
+  },
+  "T1590.002": {
+    "name": "DNS",
+    "desc": "Adversaries may gather information about the victim's DNS that can be used during targeting. DNS information may include a variety of details, including registered name servers as well as records that outline addressing for a target\u2019s subdo"
+  },
+  "T1590.004": {
+    "name": "Network Topology",
+    "desc": "Adversaries may gather information about the victim's network topology that can be used during targeting. Information about network topologies may include a variety of details, including the physical and/or logical arrangement of both exter"
+  },
+  "T1590.005": {
+    "name": "IP Addresses",
+    "desc": "Adversaries may gather the victim's IP addresses that can be used during targeting. Public IP addresses may be allocated to organizations by block, or a range of sequential addresses. Information about assigned IP addresses may include a va"
+  },
+  "T1590.006": {
+    "name": "Network Security Appliances",
+    "desc": "Adversaries may gather information about the victim's network security appliances that can be used during targeting. Information about network security appliances may include a variety of details, such as the existence and specifics of depl"
+  },
+  "T1591": {
+    "name": "Gather Victim Org Information",
+    "desc": "Adversaries may gather information about the victim's organization that can be used during targeting. Information about an organization may include a variety of details, including the names of divisions/departments, specifics of business op"
+  },
+  "T1591.002": {
+    "name": "Business Relationships",
+    "desc": "Adversaries may gather information about the victim's business relationships that can be used during targeting. Information about an organization\u2019s business relationships may include a variety of details, including second or third-party org"
+  },
+  "T1591.004": {
+    "name": "Identify Roles",
+    "desc": "Adversaries may gather information about identities and roles within the victim organization that can be used during targeting. Information about business roles may reveal a variety of targetable details, including identifiable information "
+  },
+  "T1592": {
+    "name": "Gather Victim Host Information",
+    "desc": "Adversaries may gather information about the victim's hosts that can be used during targeting. Information about hosts may include a variety of details, including administrative data (ex: name, assigned IP, functionality, etc.) as well as s"
+  },
+  "T1593": {
+    "name": "Search Open Websites/Domains",
+    "desc": "Adversaries may search freely available websites and/or domains for information about victims that can be used during targeting. Information about victims may be available in various online sites, such as social media, new sites, or those h"
+  },
+  "T1594": {
+    "name": "Search Victim-Owned Websites",
+    "desc": "Adversaries may search websites owned by the victim for information that can be used during targeting. Victim-owned websites may contain a variety of details, including names of departments/divisions, physical locations, and data about key "
+  },
+  "T1595": {
+    "name": "Active Scanning",
+    "desc": "Adversaries may execute active reconnaissance scans to gather information that can be used during targeting. Active scans are those where the adversary probes victim infrastructure via network traffic, as opposed to other forms of reconnais"
+  },
+  "T1595.001": {
+    "name": "Scanning IP Blocks",
+    "desc": "Adversaries may scan victim IP blocks to gather information that can be used during targeting. Public IP addresses may be allocated to organizations by block, or a range of sequential addresses."
+  },
+  "T1595.002": {
+    "name": "Vulnerability Scanning",
+    "desc": "Adversaries may scan victims for vulnerabilities that can be used during targeting. Vulnerability scans typically check if the configuration of a target host/application (ex: software and version) potentially aligns with the target of a spe"
+  },
+  "T1596": {
+    "name": "Search Open Technical Databases",
+    "desc": "Adversaries may search freely available technical databases for information about victims that can be used during targeting. Information about victims may be available in online databases and repositories, such as registrations of domains/c"
+  },
+  "T1596.001": {
+    "name": "DNS/Passive DNS",
+    "desc": "Adversaries may search DNS data for information about victims that can be used during targeting. DNS information may include a variety of details, including registered name servers as well as records that outline addressing for a target\u2019s s"
+  },
+  "T1596.005": {
+    "name": "Scan Databases",
+    "desc": "Adversaries may search within public scan databases for information about victims that can be used during targeting. Various online services continuously publish the results of Internet scans/surveys, often harvesting information such as ac"
+  },
+  "T1597": {
+    "name": "Search Closed Sources",
+    "desc": "Adversaries may search and gather information about victims from closed (e.g., paid, private, or otherwise not freely available) sources that can be used during targeting. Information about victims may be available for purchase from reputab"
+  },
+  "T1597.002": {
+    "name": "Purchase Technical Data",
+    "desc": "Adversaries may purchase technical information about victims that can be used during targeting. Information about victims may be available for purchase within reputable private sources and databases, such as paid subscriptions to feeds of s"
+  },
+  "T1598": {
+    "name": "Phishing for Information",
+    "desc": "Adversaries may send phishing messages to elicit sensitive information that can be used during targeting. Phishing for information is an attempt to trick targets into divulging information, frequently credentials or other actionable informa"
+  },
+  "T1599": {
+    "name": "Network Boundary Bridging",
+    "desc": "Adversaries may bridge network boundaries by compromising perimeter network devices or internal devices responsible for network segmentation. Breaching these devices may enable an adversary to bypass restrictions on traffic routing that oth"
+  },
+  "T1602.001": {
+    "name": "SNMP (MIB Dump)",
+    "desc": "Adversaries may target the Management Information Base (MIB) to collect and/or mine valuable information in a network managed using Simple Network Management Protocol (SNMP)."
+  },
+  "T1602.002": {
+    "name": "Network Device Configuration Dump",
+    "desc": "Adversaries may access network configuration files to collect sensitive data about the device and the network. The network configuration is a file containing parameters that determine the operation of the device. The device typically stores"
+  },
+  "T1604": {
+    "name": "Proxy Through Victim",
+    "desc": "Adversary uses a compromised host as a proxy to relay traffic."
+  },
+  "T1608": {
+    "name": "Stage Capabilities",
+    "desc": "Adversaries may upload, install, or otherwise set up capabilities that can be used during targeting. To support their operations, an adversary may need to take capabilities they developed ([Develop Capabilities](https://attack.mitre.org/tec"
+  },
+  "T1609": {
+    "name": "Container Administration Command",
+    "desc": "Adversaries may abuse a container administration service to execute commands within a container. A container administration service such as the Docker daemon, the Kubernetes API server, or the kubelet may allow remote management of containe"
+  },
+  "T1610": {
+    "name": "Deploy Container",
+    "desc": "Adversaries may deploy a container into an environment to facilitate execution or evade defenses. In some cases, adversaries may deploy a new container to execute processes associated with a particular image or deployment, such as processes"
+  },
+  "T1615": {
+    "name": "Group Policy Discovery",
+    "desc": "Adversaries may gather information on Group Policy settings to identify paths for privilege escalation, security measures applied within a domain, and to discover patterns in domain objects that can be manipulated or used to blend in the en"
+  },
+  "T1620": {
+    "name": "Reflective Code Loading",
+    "desc": "Adversaries may reflectively load code into a process in order to conceal the execution of malicious payloads. Reflective loading involves allocating then executing payloads directly within the memory of the process, vice creating a thread "
+  },
+  "T1621": {
+    "name": "Multi-Factor Authentication Request Generation",
+    "desc": "Adversaries may attempt to bypass multi-factor authentication (MFA) mechanisms and gain access to accounts by generating MFA requests sent to users."
+  },
+  "T1627": {
+    "name": "Execution Guardrails",
+    "desc": "Adversary constrains execution to specific target conditions."
+  },
+  "T1627.001": {
+    "name": "Geofencing",
+    "desc": "Adversary limits execution based on device geolocation."
+  },
+  "T1649": {
+    "name": "Steal or Forge Authentication Certificates",
+    "desc": "Adversaries may steal or forge certificates used for authentication to access remote systems or resources. Digital certificates are often used to sign and encrypt messages and/or files. Certificates are also used as authentication material."
+  },
+  "T1654": {
+    "name": "Log Enumeration",
+    "desc": "Adversaries may enumerate system and service logs to find useful data. These logs may highlight various types of valuable insights for an adversary, such as user authentication records ([Account Discovery](https://attack.mitre.org/technique"
+  },
+  "T1657": {
+    "name": "Financial Theft",
+    "desc": "Adversaries may steal monetary resources from targets through extortion, social engineering, technical theft, or other methods aimed at their own financial gain at the expense of the availability of these resources for victims. Financial th"
+  },
+  "T1659": {
+    "name": "Content Injection",
+    "desc": "Adversaries may gain access and continuously communicate with victims by injecting malicious content into systems through online network traffic. Rather than luring victims to malicious payloads hosted on a compromised website (i.e., [Drive"
+  },
+  "T1665": {
+    "name": "Hide Infrastructure",
+    "desc": "Adversaries may manipulate network traffic in order to hide and evade detection of their C2 infrastructure. This can be accomplished by identifying and filtering traffic from defensive tools,(Citation: TA571) masking malicious domains to ob"
+  }
+}

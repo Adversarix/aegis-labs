@@ -93,6 +93,26 @@ models:
     price_in: 0.78
     price_out: 3.90
 
+  # ---- TypeSafe Jev (System One model) ----------------------------------
+  # Jev returns typed decisions, not text, so it can't enumerate techniques.
+  # The `typesafe` provider reframes extraction as a Noul sweep: one
+  # "is technique X present?" question per candidate, thresholded. Candidates
+  # come from candidates_file (built from the corpus gold union; regenerate
+  # for a wider label space). NOTE: closed-world — Jev is handed the label
+  # set, so its precision is not directly comparable to the open-vocab LLMs.
+  # Output tokens are ~free per TypeSafe's pricing; price_out left at 0.
+  - key: jev-typesafe
+    provider: typesafe
+    model: jev-latest
+    api_key_env: TYPESAFE_API_KEY
+    base_url_env: TYPESAFE_BASE_URL
+    base_url_default: https://api.typesafe.ai/v1
+    candidates_file: data/candidates_corpus.json
+    threshold: 0.5          # keep techniques with noul >= this
+    batch_size: 40          # Nouls per /v1/systemone request
+    price_in: 0.042         # $/1M input tokens (TypeSafe list price)
+    price_out: 0.0
+
   # ---- Qwen via Ollama (local, open-weight only) ------------------------
   # NOTE: qwen3-max is proprietary/API-only and is NOT on Ollama. This runs a
   # DIFFERENT, open-weight Qwen, so its numbers are not comparable to the
