@@ -64,7 +64,11 @@ def nouls_for(rid: str) -> dict[str, float]:
 
 
 def make_judge(judge_key: str):
-    cfg = {m["key"]: m for m in yaml.safe_load((ROOT / "config.yaml").read_text())["models"]}[judge_key]
+    conf = yaml.safe_load((ROOT / "config.yaml").read_text())
+    pool = {m["key"]: m for m in (conf.get("models", []) + conf.get("judges", []))}
+    if judge_key not in pool:
+        raise SystemExit(f"--judge {judge_key!r} not found in config models or judges")
+    cfg = pool[judge_key]
     if cfg["provider"] == "anthropic":
         from anthropic import Anthropic
         client = Anthropic()
@@ -82,7 +86,7 @@ def make_judge(judge_key: str):
                     base_url=os.environ.get(cfg.get("base_url_env", ""), "") or cfg.get("base_url_default"))
 
     def ask(user: str) -> str:
-        r = client.chat.completions.create(model=cfg["model"], max_tokens=1500, temperature=0,
+        r = client.chat.completions.create(model=cfg["model"], max_tokens=4000, temperature=0,
                                            response_format={"type": "json_object"},
                                            messages=[{"role": "system", "content": JUDGE_SYS},
                                                      {"role": "user", "content": user}])

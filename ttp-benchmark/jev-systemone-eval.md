@@ -176,11 +176,60 @@ about 20-30% sub-technique noise. The relative ranking is stable because all
 models are scored against the same gold. Publication-grade gold needs a human pass
 over sub-technique assignments.
 
+### Held-out judge
+
+The default judge (Claude) is one of the scored models, so we re-ran the entire
+adjudication with a **held-out judge**, `gpt-oss-120b` (OpenAI lineage via
+Fireworks), which is neither scored nor the default judge. It is wired as a
+`judges:` entry in `config.yaml`, kept out of `models` so `run_benchmark` never
+scores it; `emit_adjudicated_cisa.py --judge gptoss-heldout` runs it. Two
+practical notes surfaced: GLM-5.3 was tried first but is thinking-only on
+Fireworks and burns its whole token budget reasoning before emitting the JSON, so
+it is unusable for batched judging; and the emit tool now chunks the candidate
+pool and parses defensively, after a bug where a judge's malformed JSON (an
+unescaped quote) was silently read as a page of "not substantiated" verdicts
+rather than an error. Claude never tripped it, so the committed gold is intact.
+One gpt-oss report (`aa25-071a`) was skipped on the first pass after a transient
+API failure; it was re-judged with `--only aa25-071a`, which reproduces the same
+negative-control draw and merges into the existing outputs, so all 25 reports
+have both judges.
+
+Agreement (`compare_judges.py`, 1,204 jointly judged candidates over all 25 reports):
+
+| metric | value |
+|---|---|
+| raw agreement | 75.4% |
+| Cohen's kappa | 0.506 (moderate) |
+| Claude positive rate | 48.2% |
+| gpt-oss positive rate | 42.5% |
+| techniques added (Claude / gpt-oss) | 580 / 512 |
+| added-set Jaccard (mean/report) | 55.0% |
+| negative controls accepted (gpt-oss) | 0 / 75 |
+
+Moderate agreement (kappa 0.51) means individual technique labels are genuinely
+judge-dependent, consistent with the sub-technique noise above. It does **not**
+move the conclusions. Re-scoring on a **consensus gold** (`data/corpus_cisa_consensus.jsonl`,
+keeping only techniques both judges substantiate) leaves the ranking unchanged
+and the precision lift intact:
+
+| model (CISA, consensus gold) | P | F1(strict) | F1(parent) | R |
+|---|---|---|---|---|
+| jev-typesafe (thr 0.5) | 0.63 | 0.720 | 0.746 | 0.835 |
+| claude-opus-4-8 | 0.70 | 0.564 | 0.711 | 0.471 |
+| kimi-k3-fireworks | 0.73 | 0.526 | 0.687 | 0.412 |
+| deepseek-v4-pro | 0.69 | 0.401 | 0.570 | 0.284 |
+| qwen3-max | 0.62 | 0.340 | 0.472 | 0.234 |
+
+So the corrected-gold findings do not rest on any single judge; only the absolute
+per-label gold is judge-sensitive, which the consensus corpus makes explicit.
+
 ## 7. Limitations
 
-- **Judge is a model, and one of the scored models.** Claude judged gold that
-  Claude is scored against. Blinding and the 0% control rate mitigate this, but a
-  clean version would use a held-out judge and a human sample.
+- **Judge is a model.** The default judge (Claude) is one of the scored models.
+  This is now cross-checked with a held-out judge (gpt-oss-120b): the conclusions
+  hold on a consensus gold, but per-label agreement is only moderate (kappa 0.51),
+  so individual technique labels stay judge-dependent. A human sample is still the
+  clean final step.
 - **Pool construction cannot recover techniques no model proposed**, so recall
   denominators are still slightly optimistic for everyone.
 - **Closed-world advantage for Jev** on the extraction framing, as in Section 1.

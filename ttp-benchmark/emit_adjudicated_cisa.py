@@ -48,7 +48,9 @@ JUDGE_SYS = (
     "was used, judged against the technique's ATT&CK definition -- not whether it is "
     "merely plausible for this kind of actor. Quote the shortest supporting sentence "
     "when supported. Respond ONLY as JSON: "
-    '{"<technique_id>": {"supported": true|false, "quote": "<sentence or empty>"}, ...}'
+    '{"<technique_id>": {"supported": true|false, "quote": "<sentence or empty>"}, ...} '
+    "Return a verdict for EVERY candidate. In the quote value use only single "
+    "quotes; never put a double-quote character inside it, so the JSON stays valid."
 )
 
 
@@ -83,7 +85,11 @@ def jev_nouls(rid: str) -> dict[str, float]:
 
 
 def make_judge(judge_key: str):
-    cfg = {m["key"]: m for m in yaml.safe_load((ROOT / "config.yaml").read_text())["models"]}[judge_key]
+    conf = yaml.safe_load((ROOT / "config.yaml").read_text())
+    pool = {m["key"]: m for m in (conf.get("models", []) + conf.get("judges", []))}
+    if judge_key not in pool:
+        raise SystemExit(f"--judge {judge_key!r} not found in config models or judges")
+    cfg = pool[judge_key]
     if cfg["provider"] == "anthropic":
         from anthropic import Anthropic
         client = Anthropic()
@@ -99,19 +105,81 @@ def make_judge(judge_key: str):
     from openai import OpenAI
     client = OpenAI(api_key=os.environ.get(cfg.get("api_key_env", ""), ""),
                     base_url=os.environ.get(cfg.get("base_url_env", ""), "") or cfg.get("base_url_default"))
+    extra = cfg.get("params", {}) or {}  # e.g. reasoning_effort for gpt-oss
 
     def ask(user: str) -> str:
         r = client.chat.completions.create(model=cfg["model"], max_tokens=4000, temperature=0,
                                            response_format={"type": "json_object"},
+                                           extra_body=extra or None,
                                            messages=[{"role": "system", "content": JUDGE_SYS},
                                                      {"role": "user", "content": user}])
         return r.choices[0].message.content or ""
     return ask
 
 
-def parse_json(text: str) -> dict:
+_VERDICT_RE = re.compile(r'"(T\d{4}(?:\.\d{3})?)"\s*:\s*\{(?P<body>[^{}]*)\}')
+
+
+def parse_verdicts(text: str) -> dict:
+    """Return {norm_tid: {supported: bool, quote: str}}, robust to malformed JSON.
+
+    Strict json.loads first; on failure (e.g. an unescaped double-quote inside a
+    quote value) fall back to a per-technique regex that recovers the booleans.
+    """
+    out: dict[str, dict] = {}
     m = re.search(r"\{.*\}", text, re.S)
-    return json.loads(m.group(0)) if m else {}
+    if m:
+        try:
+            j = json.loads(m.group(0))
+            if isinstance(j, dict):
+                for k, v in j.items():
+                    tid = norm(k)
+                    if tid and isinstance(v, dict) and "supported" in v:
+                        out[tid] = {"supported": bool(v.get("supported")),
+                                    "quote": str(v.get("quote", "") or "")}
+                if out:
+                    return out
+        except Exception:  # noqa: BLE001 - fall through to regex recovery
+            pass
+    for mm in _VERDICT_RE.finditer(text):
+        tid = norm(mm.group(1))
+        sm = re.search(r'"supported"\s*:\s*(true|false)', mm.group("body"))
+        if tid and sm:
+            qm = re.search(r'"quote"\s*:\s*"(.*)"\s*$', mm.group("body").strip())
+            out[tid] = {"supported": sm.group(1) == "true", "quote": qm.group(1) if qm else ""}
+    return out
+
+
+def judge_candidates(ask, rep_text: str, cand: list[str], names: dict, chunk: int = 25):
+    """Judge candidates in bounded chunks and merge verdicts.
+
+    Chunking keeps each call's output (and any reasoning model's thinking) inside
+    the token budget, so large reports do not truncate. Returns (verdicts, err);
+    a chunk that never reaches 2/3 coverage after a retry fails the whole report
+    rather than letting it through with a partial, misleading gold.
+    """
+    verdicts: dict = {}
+    for i in range(0, len(cand), chunk):
+        sub = cand[i:i + chunk]
+        listing = "\n".join(f"- {t}: {names.get(t, {}).get('name', t)}" for t in sub)
+        user = (f"Advisory excerpt:\n\"\"\"\n{rep_text[:12000]}\n\"\"\"\n\n"
+                f"Candidate ATT&CK techniques:\n{listing}\n\n"
+                "For each, is it substantiated by the text? Respond as the specified JSON.")
+        got: dict = {}
+        need = max(1, len(sub) * 2 // 3)
+        for _ in range(2):
+            try:
+                got = parse_verdicts(ask(user))
+            except Exception:  # noqa: BLE001
+                got = {}
+            time.sleep(0.3)
+            if len([t for t in sub if t in got]) >= need:
+                break
+        covered = len([t for t in sub if t in got])
+        if covered < need:
+            return verdicts, f"low parse coverage on chunk {i // chunk}: {covered}/{len(sub)}"
+        verdicts.update({t: got[t] for t in sub if t in got})
+    return verdicts, None
 
 
 def main() -> None:
@@ -122,6 +190,9 @@ def main() -> None:
     ap.add_argument("--out", default="data/corpus_cisa_adjudicated.jsonl")
     ap.add_argument("--audit", default="results/cisa_adjudication_audit.json")
     ap.add_argument("--max-reports", type=int)
+    ap.add_argument("--only", nargs="+", metavar="ID",
+                    help="re-judge just these report ids and merge into existing --out/--audit "
+                         "(e.g. to retry a SKIPPED report); control sampling matches a full run")
     args = ap.parse_args()
 
     names = json.loads((ROOT / args.candidates).read_text())
@@ -152,21 +223,21 @@ def main() -> None:
 
         cand = to_judge + controls
         random.shuffle(cand)
+        if args.only and rid not in args.only:
+            continue  # after the random draws, so the retried reports get the same controls
         supported: set[str] = set()
-        verdicts = {}
+        verdicts: dict = {}
+        err = None
         if cand:
-            listing = "\n".join(f"- {t}: {names.get(t, {}).get('name', t)}" for t in cand)
-            user = (f"Advisory excerpt:\n\"\"\"\n{rep['text'][:12000]}\n\"\"\"\n\n"
-                    f"Candidate ATT&CK techniques:\n{listing}\n\n"
-                    "For each, is it substantiated by the text? Respond as the specified JSON.")
-            try:
-                verdicts = parse_json(ask(user))
-            except Exception as e:  # noqa: BLE001
-                verdicts = {"__error__": str(e)}
-            time.sleep(0.3)
+            verdicts, err = judge_candidates(ask, rep["text"], cand, names)
+            if err:
+                print(f"  {rid}: SKIPPED ({err})", flush=True)
+                audit["reports"][rid] = {"error": err, "table": sorted(table),
+                                         "pool_judged": len(to_judge)}
+                continue
             for t in cand:
                 v = verdicts.get(t) or {}
-                ok = bool(v.get("supported")) if isinstance(v, dict) else False
+                ok = bool(v.get("supported"))
                 if t in controls:
                     ctrl_total += 1
                     ctrl_accept += ok
@@ -192,6 +263,16 @@ def main() -> None:
         print(f"  {rid}: table {len(table)} +{len(added)} added (pool {len(pool)}) "
               f"| controls accepted {ctrl_accept}/{ctrl_total}", flush=True)
 
+    if args.only:  # merge into the existing outputs, keeping corpus order
+        prev = {}
+        if (ROOT / args.out).exists():
+            prev = {r["id"]: r for r in map(json.loads, (ROOT / args.out).read_text().splitlines()) if r}
+        prev.update({r["id"]: r for r in rows})
+        rows = [prev[rid] for rid in corpus if rid in prev]
+        if (ROOT / args.audit).exists():
+            old = json.loads((ROOT / args.audit).read_text())
+            old["reports"].update(audit["reports"])
+            audit["reports"] = {rid: old["reports"][rid] for rid in corpus if rid in old["reports"]}
     (ROOT / args.out).write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n")
     (ROOT / args.audit).parent.mkdir(parents=True, exist_ok=True)
     (ROOT / args.audit).write_text(json.dumps(audit, indent=2))
