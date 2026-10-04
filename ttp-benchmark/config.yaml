@@ -134,3 +134,27 @@ models:
     # task and burns output tokens). Forwarded via extra_body to Ollama.
     params:
       think: false
+
+# ---------------------------------------------------------------------------
+# Judges (NOT scored). Used only by the adjudication tools via --judge, and
+# deliberately kept OUT of `models` so run_benchmark never benchmarks a judge.
+# A held-out judge must be a model family absent from `models` above, so it is
+# independent of both the scored models and the default (Claude) judge. This
+# removes the circularity of a scored model adjudicating the gold it is graded
+# against. GLM (Zhipu) is neither scored nor the default judge.
+# ---------------------------------------------------------------------------
+judges:
+  # gpt-oss-120b (OpenAI open model) via Fireworks: neither scored nor the
+  # default Claude judge, and its reasoning effort is controllable. `medium`
+  # returns a verdict for every candidate in one pass; `low` drops candidates.
+  # (GLM-5.3 was tried first but is thinking-only on Fireworks and burns the
+  # whole token budget reasoning before emitting the JSON, so it is unusable
+  # for large batched judging.)
+  - key: gptoss-heldout
+    provider: openai_compatible
+    model: accounts/fireworks/models/gpt-oss-120b
+    api_key_env: FIREWORKS_API_KEY
+    base_url_env: FIREWORKS_BASE_URL
+    base_url_default: https://api.fireworks.ai/inference/v1
+    params:
+      reasoning_effort: medium

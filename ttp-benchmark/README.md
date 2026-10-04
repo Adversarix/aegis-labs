@@ -223,7 +223,12 @@ Precision is immune to that bias, and Jev is tunable across its threshold (P 0.7
 at 0.5, 0.805 at 0.7 matching the frontier models, 0.895 at 0.9); even at the
 precision-matched 0.7 it still leads on F1 by out-recalling the LLMs. The judge
 was validated (100% quote grounding, 0/75 negative controls accepted; parent-level
-verdicts solid, ~20-30% of sub-technique calls debatable). Full write-up in
+verdicts solid, ~20-30% of sub-technique calls debatable). Because that judge
+(Claude) is also a scored model, the adjudication was re-run with a **held-out
+judge** (`gpt-oss-120b`, a `judges:` entry kept out of `models`); the two agree
+moderately (Cohen's kappa 0.51), and on a consensus gold (techniques both judges
+accept, `data/corpus_cisa_consensus.jsonl`) the ranking and precision lift are
+unchanged, so the conclusions do not rest on a single judge. Full write-up in
 `jev-systemone-eval.md`. Reproduce:
 
 ```bash
@@ -232,6 +237,11 @@ python analyze_calibration.py                              # Brier / ECE / thres
 python adjudicate_jev_fp.py --threshold 0.9               # high-confidence FP adjudication
 python emit_adjudicated_cisa.py --judge claude-opus-4-8   # build corrected gold
 python run_benchmark.py --corpus data/corpus_cisa_adjudicated.jsonl  # re-score all models
+# held-out judge cross-check:
+python emit_adjudicated_cisa.py --judge gptoss-heldout \
+  --out data/corpus_cisa_adjudicated_gptoss.jsonl --audit results/cisa_adjudication_audit_gptoss.json
+python compare_judges.py                                  # agreement + consensus corpus
+python run_benchmark.py --corpus data/corpus_cisa_consensus.jsonl    # re-score on consensus gold
 ```
 
 ### Per-report drill-down
@@ -264,7 +274,8 @@ data/candidates_corpus.json         280-technique candidate set for the Jev Noul
 data/corpus_cisa_adjudicated.jsonl  CISA gold corrected for table incompleteness
 analyze_calibration.py    Brier / ECE / reliability + threshold sweep (Jev noul probs)
 adjudicate_jev_fp.py      blinded LLM-judge over Jev's high-confidence false positives
-emit_adjudicated_cisa.py  build corrected CISA gold from the full candidate pool
+emit_adjudicated_cisa.py  build corrected CISA gold from the full candidate pool (--judge)
+compare_judges.py         judge agreement (kappa) + consensus-gold corpus
 jev-systemone-eval.md     the System One (Jev) evaluation note
 harness/
   prompts.py              the single shared extraction prompt (identical for every model)
