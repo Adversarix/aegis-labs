@@ -8,7 +8,11 @@
     "test": "node test-policy.mjs && node test-fuzz-artifact.mjs"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "zod": "^3.23.0"
+  },
+  "overrides": {
+    "proxy-addr": ">=2.0.8",
+    "body-parser": ">=2.4.0"
   }
 }
