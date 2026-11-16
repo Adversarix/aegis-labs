@@ -50,7 +50,20 @@ green-tier tools; deferred with the rest of red-tier work.
 `SEAM_MODE`, `MEDIATION_LOG`, `SEAM_TOOLS` (which tools to *expose* — distinct from
 policy, which decides whether an exposed tool may *run*), `AEGIS_SCOPE` (path to a
 run-scope JSON; see `scope.example.json`), `AEGIS_MARKER_KEY`, `AEGIS_KILL`,
-`AEGIS_KILL_FILE`, `AEGIS_FUZZ_IMAGE`.
+`AEGIS_KILL_FILE`, `AEGIS_FUZZ_IMAGE`, `AEGIS_STORE` + `AEGIS_STORE_KEY` (munitions
+store for `promote_finding`), `AEGIS_EVIDENCE_STORE` + `AEGIS_EVIDENCE_KEY`.
+
+## Evidence capture
+
+When `AEGIS_EVIDENCE_STORE` is set, every tool that actually executes (`run_shell`,
+`run_poc`, `fuzz`) seals its I/O into the evidence store as a `tool_io` capture via
+[`evidence-tap.js`](./evidence-tap.js) (see
+[`evidence-custody-spec.md`](../../evidence-custody-spec.md) §5): the seam is the only
+place the model's tools run, so it is where custody begins. The tool response carries
+back an `evidence_capture_id=<sha256>` line, which a later `promote_finding` or confirm
+step can bind as proof. Sealing is **fail-open**: a seal error is logged and the tool
+still returns, so custody never becomes an availability dependency for an allowed tool.
+With the var unset the tap is a no-op and the seam behaves exactly as before.
 
 ## Tests
 

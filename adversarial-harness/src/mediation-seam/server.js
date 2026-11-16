@@ -26,6 +26,9 @@
 //   AEGIS_KILL         "1" to trip the kill-gate externally
 //   AEGIS_KILL_FILE    path; if it exists, the kill-gate is tripped
 //   AEGIS_FUZZ_IMAGE        sandbox image (default aegis-fuzz:latest)
+//   AEGIS_EVIDENCE_STORE    dir for the evidence store; every executed tool seals
+//                           its I/O there (evidence-custody-spec.md §5). Unset -> off.
+//   AEGIS_EVIDENCE_KEY      evidence-store key (default: the run marker key)
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -37,6 +40,7 @@ import { evaluate, TOOLS, DEFAULT_SCOPE } from "./policy.js";
 import { signMarker } from "./marker.js";
 import { fuzzArgv, extractReproHex } from "./artifact.js";
 import { openStore } from "../munitions-store/store.js";
+import { openEvidenceTap } from "./evidence-tap.js";
 
 const MODE = (process.env.SEAM_MODE || "enforcing").toLowerCase();
 const LOG = process.env.MEDIATION_LOG || new URL("./mediation.log", import.meta.url).pathname;
@@ -50,6 +54,29 @@ const STORE = process.env.AEGIS_STORE
   ? openStore(process.env.AEGIS_STORE, { key: process.env.AEGIS_STORE_KEY || MARKER_KEY })
   : null;
 const SCOPE = process.env.AEGIS_SCOPE ? JSON.parse(readFileSync(process.env.AEGIS_SCOPE, "utf8")) : DEFAULT_SCOPE;
+// Evidence tap: every executed tool seals its I/O into the evidence store
+// (evidence-custody-spec.md §5). Gated on AEGIS_EVIDENCE_STORE (dir); the key
+// defaults to the run marker key so captures are run-scoped. Disabled -> no-op.
+const EVID = openEvidenceTap({
+  dir: process.env.AEGIS_EVIDENCE_STORE,
+  key: process.env.AEGIS_EVIDENCE_KEY || MARKER_KEY,
+  run_id: SCOPE.run_id,
+});
+
+// Seal tool I/O, fail-open: a seal error logs and returns null rather than
+// failing a tool the policy already allowed. Sealing is additive provenance;
+// it must not become an availability dependency for execution. (If a run ever
+// needs seal-or-refuse, gate the tool body on a non-null capture here.)
+function sealIO(tool, io, marker) {
+  if (!EVID.enabled) return null;
+  try {
+    return EVID.seal(tool, io, marker);
+  } catch (e) {
+    appendFileSync(LOG, JSON.stringify({ ts: new Date().toISOString(), seam: MODE, event: "seal_error", tool, error: String(e?.message ?? e) }) + "\n");
+    return null;
+  }
+}
+const evidenceLine = (cap) => (cap ? `\nevidence_capture_id=${cap}` : "");
 
 const KILL = { killed: false, reason: "" };
 let SEQ = 0;
@@ -144,7 +171,8 @@ if (ALLOW_EXPOSE.includes("run_shell")) {
       let code = 0, stdout = "", stderr = "";
       try { stdout = execSync(cmd, { encoding: "utf8", timeout: 30000, stdio: ["ignore", "pipe", "pipe"] }); }
       catch (e) { code = e.status ?? 1; stdout = e.stdout?.toString() ?? ""; stderr = e.stderr?.toString() ?? String(e.message ?? e); }
-      return { content: [{ type: "text", text: `exit=${code}\n--- stdout ---\n${stdout}\n--- stderr ---\n${stderr}` }] };
+      const cap = sealIO("run_shell", { argv: cmd, exit: code, stdout, stderr }, v.marker?.hmac);
+      return { content: [{ type: "text", text: `exit=${code}\n--- stdout ---\n${stdout}\n--- stderr ---\n${stderr}` + evidenceLine(cap) }] };
     }
   );
 }
@@ -167,8 +195,10 @@ if (ALLOW_EXPOSE.includes("run_poc")) {
       if (v.decision !== "allow") return denyResult(v);
       const r = sandboxRun(["/work/vuln_poc"], buf, v.marker?.hmac);
       const crashed = asanCrashed(r), summary = asanSummary(r);
+      const cap = sealIO("run_poc", { argv: ["/work/vuln_poc"], input_hex: buf.toString("hex"), exit: r.code, crashed, stdout: r.out, stderr: r.err }, v.marker?.hmac);
       const text = `input_len=${buf.length}\ncrashed=${crashed}\nexit=${r.code}\n` +
-        (crashed ? `--- ASan ---\n${summary || r.err || r.out}\n` : `--- clean ---\n${r.out}\n`);
+        (crashed ? `--- ASan ---\n${summary || r.err || r.out}\n` : `--- clean ---\n${r.out}\n`) +
+        evidenceLine(cap);
       return { content: [{ type: "text", text }] };
     }
   );
@@ -196,13 +226,15 @@ if (ALLOW_EXPOSE.includes("fuzz")) {
       const r = sandboxRun(fuzzArgv(secs), Buffer.alloc(0), v.marker?.hmac);
       const crashed = asanCrashed(r), summary = asanSummary(r);
       const reproHex = extractReproHex(r.out);
+      const cap = sealIO("fuzz", { argv: fuzzArgv(secs), max_seconds: secs, exit: r.code, crashed, reproducer_input_hex: reproHex, stdout: r.out, stderr: r.err }, v.marker?.hmac);
       const text = `crashed=${crashed}\nexit=${r.code}\n` +
         (crashed ? `--- ASan ---\n${summary}\n` : `--- no crash found in ${secs}s ---\n`) +
         (reproHex
           ? `reproducer_input_hex=${reproHex}\n` +
             `next: run_poc(input_hex="${reproHex}") to reproduce, then ` +
             `promote_finding(reproducer_input_hex="${reproHex}", recipe, crash_report).\n`
-          : (crashed ? `(crash artifact not recovered from the sandbox)\n` : ""));
+          : (crashed ? `(crash artifact not recovered from the sandbox)\n` : "")) +
+        evidenceLine(cap);
       return { content: [{ type: "text", text }] };
     }
   );
