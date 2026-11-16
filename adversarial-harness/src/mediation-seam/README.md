@@ -65,6 +65,16 @@ step can bind as proof. Sealing is **fail-open**: a seal error is logged and the
 still returns, so custody never becomes an availability dependency for an allowed tool.
 With the var unset the tap is a no-op and the seam behaves exactly as before.
 
+**Promote-gate.** When the evidence store is configured, `promote_finding` enforces the
+spec's no-finding-without-proof rule (`evidence-custody-spec.md` §1, §11 criterion 1): a
+finding may be promoted to a munition only if it has an active **probative** binding to a
+sealed capture. Unlike the seal tap this gate is **fail-closed** (a missing `finding_id`,
+an unbound finding, or a failed custody read all refuse, logged as `promote_refused`),
+because promoting an unproven claim is exactly what custody exists to prevent. The flow is:
+run the tool (seals, returns `evidence_capture_id`) -> `bind` that capture to the finding as
+`role=trigger, weight=probative` -> `promote_finding`. With `AEGIS_EVIDENCE_STORE` unset the
+gate is a no-op and promotion keeps its prior behavior.
+
 ## Tests
 
 ```bash
