@@ -17,12 +17,10 @@
 //
 // Pure Node builtins (no external deps) so it is importable by both seams and
 // unit-testable in isolation.
-import { createHmac, createHash, randomUUID, randomBytes, createCipheriv, createDecipheriv, timingSafeEqual } from "node:crypto";
+import { createHash, randomUUID, randomBytes, createCipheriv, createDecipheriv } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
-
-const canonical = (o) => JSON.stringify(o, Object.keys(o).sort());
-const sha256 = (s) => createHash("sha256").update(s).digest("hex");
+import { createLedger } from "../custody-ledger/ledger.js";
 
 // Derive a stable 32-byte key from whatever the caller supplies (hex or passphrase).
 function deriveKey(material) {
@@ -78,6 +76,10 @@ function gateExport(m) {
 
 export function openStore(dir, opts = {}) {
   const key = deriveKey(opts.key || process.env.AEGIS_STORE_KEY || randomBytes(32).toString("hex"));
+  // The signed, hash-chained custody ledger lives in the shared module
+  // (src/custody-ledger), consumed by every accountable store. HUMAN_ACTIONS is the
+  // set requireAuthz gates; append itself is a pure mechanical primitive.
+  const ledger = createLedger({ key, humanActions: HUMAN_ACTIONS });
   const munDir = join(dir, "munitions");
   mkdirSync(munDir, { recursive: true });
 
@@ -88,26 +90,15 @@ export function openStore(dir, opts = {}) {
   };
   const save = (m) => writeFileSync(path(m.id), JSON.stringify(m, null, 2));
 
-  // Append a signed, hash-chained event to a munition's ledger.
-  function appendEvent(m, { action, actor, run_id = null, authorization = null, reason = "", extra = {} }) {
-    const prev = m.ledger.length ? m.ledger[m.ledger.length - 1].hmac : "GENESIS";
-    const body = { seq: m.ledger.length, prev, action, actor, run_id,
-      authorization_ref: authorization ? sha256(canonical(authorization)) : null, reason, ...extra };
-    const event_hash = sha256(canonical(body) + prev);
-    const hmac = createHmac("sha256", key).update(event_hash).digest("hex");
-    m.ledger.push({ ...body, event_hash, hmac });
-  }
+  // Append a signed, hash-chained event to a munition's ledger, via the shared
+  // custody ledger. Byte-compatible with the previous inline scheme, so existing
+  // on-disk ledgers still verify.
+  const appendEvent = (m, spec) => ledger.append(m.ledger, spec);
 
   // A human authorization must be an object carrying at least {role, actor}. The
-  // harness cannot fabricate one for itself: HUMAN_ACTIONS demand it explicitly.
-  function requireHumanAuthz(action, authorization) {
-    if (!HUMAN_ACTIONS.has(action)) return;
-    if (!authorization || !authorization.role || !authorization.actor) {
-      const e = new Error(`action '${action}' requires a human authorization {role, actor}; the harness cannot self-authorize`);
-      e.code = "AUTHZ_REQUIRED";
-      throw e;
-    }
-  }
+  // harness cannot fabricate one for itself. Delegated to the shared ledger's guard,
+  // which gates exactly HUMAN_ACTIONS.
+  const requireHumanAuthz = ledger.requireAuthz;
 
   return {
     // Discovery promotes a confirmed crash into an inert munition (created/at_rest).
@@ -251,18 +242,8 @@ export function openStore(dir, opts = {}) {
     // Also reconciles the record's state against its ledger.
     verify(id) {
       const m = load(id);
-      let prev = "GENESIS";
-      for (let i = 0; i < m.ledger.length; i++) {
-        const ev = m.ledger[i];
-        const { event_hash, hmac, ...body } = ev;
-        if (body.seq !== i || body.prev !== prev) return { ok: false, reason: `chain break at seq ${i}` };
-        const eh = sha256(canonical(body) + prev);
-        if (eh !== event_hash) return { ok: false, reason: `event_hash mismatch at seq ${i}` };
-        const expect = createHmac("sha256", key).update(eh).digest("hex");
-        const a = Buffer.from(expect, "hex"), b = Buffer.from(hmac, "hex");
-        if (a.length !== b.length || !timingSafeEqual(a, b)) return { ok: false, reason: `bad signature at seq ${i}` };
-        prev = hmac;
-      }
+      const chain = ledger.verify(m.ledger);
+      if (!chain.ok) return { ok: false, reason: chain.reason ?? `chain break at seq ${chain.brokenAt}` };
       // reconciliation: disposed => artifact shredded and armed false; never armed at rest
       if (m.armed) return { ok: false, reason: "armed at rest (invariant violation)" };
       if (m.custody_state === "disposed" && m.artifact_enc !== null) return { ok: false, reason: "disposed but artifact present" };
