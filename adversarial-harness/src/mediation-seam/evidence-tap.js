@@ -35,3 +35,29 @@ export function openEvidenceTap({ dir, key, run_id = null, captured_by = "mediat
     },
   };
 }
+
+// The promote-gate (evidence-custody-spec.md §1, §11 criterion 1). Decides whether a
+// finding may be promoted to a munition. When custody is not configured the gate does
+// not apply and promotion proceeds (enforced:false), matching the opt-in posture of the
+// rest of the evidence path. When it is configured the gate is fail-CLOSED: promotion is
+// allowed only if the finding has an active probative binding to a sealed capture, and
+// any error reading that binding denies. server.js calls this in the promote_finding
+// handler; kept here with the tap so the rule is unit-testable without importing server.js
+// (which connects a stdio transport at import).
+export function promoteGate(tap, finding_id) {
+  if (!tap || !tap.enabled) return { ok: true, enforced: false };
+  try {
+    if (finding_id && tap.store.hasProbativeBinding(finding_id)) {
+      return { ok: true, enforced: true };
+    }
+  } catch (e) {
+    return { ok: false, enforced: true, reason: `custody check failed: ${String(e?.message ?? e)}` };
+  }
+  return {
+    ok: false,
+    enforced: true,
+    reason: finding_id
+      ? `finding '${finding_id}' has no active probative binding to a sealed capture`
+      : "promote_finding requires a finding_id bound to a sealed capture",
+  };
+}

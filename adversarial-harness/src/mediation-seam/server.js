@@ -40,7 +40,7 @@ import { evaluate, TOOLS, DEFAULT_SCOPE } from "./policy.js";
 import { signMarker } from "./marker.js";
 import { fuzzArgv, extractReproHex } from "./artifact.js";
 import { openStore } from "../munitions-store/store.js";
-import { openEvidenceTap } from "./evidence-tap.js";
+import { openEvidenceTap, promoteGate } from "./evidence-tap.js";
 
 const MODE = (process.env.SEAM_MODE || "enforcing").toLowerCase();
 const LOG = process.env.MEDIATION_LOG || new URL("./mediation.log", import.meta.url).pathname;
@@ -259,6 +259,18 @@ if (ALLOW_EXPOSE.includes("promote_finding")) {
     async ({ reproducer_input_hex, recipe, crash_report, finding_id }) => {
       const v = mediate("promote_finding", { finding_id, bytes: (reproducer_input_hex.length / 2) | 0 });
       if (v.decision !== "allow") return denyResult(v);
+      // Evidence gate (evidence-custody-spec.md §1, §11 criterion 1): a claim may not
+      // become a munition without an active probative binding to a seam-sealed capture.
+      // Fail-CLOSED (unlike the seal tap): promoting an unproven claim is the exact thing
+      // custody exists to prevent, so a missing/failed check refuses. The gate is a no-op
+      // when AEGIS_EVIDENCE_STORE is unset, like the rest of the opt-in custody path.
+      const gate = promoteGate(EVID, finding_id);
+      if (!gate.ok) {
+        appendFileSync(LOG, JSON.stringify({ ts: new Date().toISOString(), seam: MODE, event: "promote_refused", reason: gate.reason, finding_id: finding_id ?? null, run_id: SCOPE.run_id }) + "\n");
+        return { isError: true, content: [{ type: "text", text:
+          `promote refused: ${gate.reason} (evidence-custody-spec.md §11.1). Bind the capture ` +
+          `that proves the crash (role=trigger, weight=probative) with its evidence_capture_id, then promote.` }] };
+      }
       if (!STORE) return { isError: true, content: [{ type: "text", text: "no munitions store configured (set AEGIS_STORE)" }] };
       const m = STORE.create({
         origin: "discovered",

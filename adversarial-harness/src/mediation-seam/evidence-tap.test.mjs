@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { openEvidenceTap } from "./evidence-tap.js";
+import { openEvidenceTap, promoteGate } from "./evidence-tap.js";
 
 const tmp = () => mkdtempSync(join(tmpdir(), "evtap-"));
 
@@ -49,4 +49,51 @@ test("different tool output content-addresses to different captures", () => {
   // NB: byte-identical observations (same tool/argv/output within the same ms)
   // content-address to the SAME capture_id by design (dedup, spec §3.1). The
   // mediation log, not the capture, is the per-execution event record.
+});
+
+// ---- promote-gate (evidence-custody-spec.md §1, §11.1) ----
+
+test("promote-gate is a no-op when custody is not configured", () => {
+  const tap = openEvidenceTap({});                 // disabled
+  const g = promoteGate(tap, "finding-x");
+  assert.equal(g.ok, true);
+  assert.equal(g.enforced, false);
+});
+
+test("promote-gate refuses a finding with no probative binding", () => {
+  const tap = openEvidenceTap({ dir: tmp(), key: "k", run_id: "r1" });
+  tap.seal("fuzz", { exit: 1, crashed: true, stdout: "crash" }, "mk");  // sealed, never bound
+  const g = promoteGate(tap, "finding-unbound");
+  assert.equal(g.ok, false);
+  assert.equal(g.enforced, true);
+  assert.match(g.reason, /no active probative binding/);
+});
+
+test("promote-gate refuses when no finding_id is given", () => {
+  const tap = openEvidenceTap({ dir: tmp(), key: "k", run_id: "r1" });
+  const g = promoteGate(tap, undefined);
+  assert.equal(g.ok, false);
+  assert.match(g.reason, /requires a finding_id/);
+});
+
+test("promote-gate allows a finding bound to a sealed capture", () => {
+  const tap = openEvidenceTap({ dir: tmp(), key: "k", run_id: "r1" });
+  const cap = tap.seal("run_poc",
+    { argv: ["/work/vuln_poc"], input_hex: "4141", exit: 1, crashed: true, stdout: "AddressSanitizer: heap-buffer-overflow" },
+    "mk");
+  tap.store.bind("finding-ok", { capture_id: cap, role: "trigger", weight: "probative", claim: "poc crash" });
+  const g = promoteGate(tap, "finding-ok");
+  assert.equal(g.ok, true);
+  assert.equal(g.enforced, true);
+});
+
+test("promote-gate denies a finding whose probative binding was superseded", () => {
+  const tap = openEvidenceTap({ dir: tmp(), key: "k", run_id: "r1" });
+  const cap = tap.seal("fuzz", { exit: 1, crashed: true, stdout: "crash" }, "mk");
+  const { binding_id } = tap.store.bind("finding-sup", { capture_id: cap, role: "trigger", weight: "probative", claim: "c" });
+  assert.equal(promoteGate(tap, "finding-sup").ok, true);     // proven while active
+  tap.store.supersede("finding-sup", binding_id);
+  const g = promoteGate(tap, "finding-sup");                  // no longer active -> denied
+  assert.equal(g.ok, false);
+  assert.match(g.reason, /no active probative binding/);
 });
